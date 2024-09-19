@@ -1,0 +1,6 @@
+#! /bin/sh
+
+while [[ true ]]; do
+  wallpaper-set-random
+  sleep 5
+done

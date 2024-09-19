@@ -1,0 +1,25 @@
+#!/bin/sh
+
+case "$1" in
+prev)
+  playerctl previous
+  hyprctl notify 6 1000 0 "Previous"
+  ;;
+next)
+  playerctl next
+  hyprctl notify 6 1000 0 "Next"
+  ;;
+stop)
+  playerctl stop
+  hyprctl notify 6 1000 0 "Stop"
+  ;;
+toggle)
+  if [[ "$(playerctl status)" == "Playing" ]]; then
+    playerctl pause
+    hyprctl notify 6 1000 0 "Pause"
+  elif [[ "$(playerctl status)" == "Paused" ]]; then
+    playerctl play
+    hyprctl notify 6 1000 0 "Play"
+  fi
+  ;;
+esac
