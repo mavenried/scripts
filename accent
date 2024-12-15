@@ -1,0 +1,54 @@
+#! /bin/bash
+case $1 in
+"teal")
+  gsettings set org.gnome.desktop.interface gtk-theme 'Catppuccin-Teal-Dark'
+  ln /home/maverikio/.themes/Catppuccin-Teal-Dark/gtk-4.0/assets /home/maverikio/.config/gtk-4.0/assets -sf
+  ln /home/maverikio/.themes/Catppuccin-Teal-Dark/gtk-4.0/gtk.css /home/maverikio/.config/gtk-4.0/gtk.css -sf
+  ln /home/maverikio/.themes/Catppuccin-Teal-Dark/gtk-4.0/gtk-dark.css /home/maverikio/.config/gtk-3.0/gtk-dark.css -sf
+  sudo flatpak override --env=GTK_THEME="Catppuccin-Teal-Dark"
+  echo "\$hl = rgba(94e2d5ff)" >~/.config/hypr/accent.conf
+  echo "@import url('colors.css');@define-color hl @teal;" >~/.config/waybar/accent.css
+  ;;
+"purple")
+  gsettings set org.gnome.desktop.interface gtk-theme 'Catppuccin-Purple-Dark'
+  ln /home/maverikio/.themes/Catppuccin-Purple-Dark/gtk-4.0/assets /home/maverikio/.config/gtk-4.0/assets -sf
+  ln /home/maverikio/.themes/Catppuccin-Purple-Dark/gtk-4.0/gtk.css /home/maverikio/.config/gtk-4.0/gtk.css -sf
+  ln /home/maverikio/.themes/Catppuccin-Purple-Dark/gtk-4.0/gtk-dark.css /home/maverikio/.config/gtk-3.0/gtk-dark.css -sf
+  sudo flatpak override --env=GTK_THEME=Catppuccin-Purple-Dark
+  echo "\$hl = rgba(cba6f7ff)" >~/.config/hypr/accent.conf
+  echo "@import url('colors.css');@define-color hl @mauve;" >~/.config/waybar/accent.css
+  ;;
+"red")
+  gsettings set org.gnome.desktop.interface gtk-theme 'Catppuccin-Red-Dark'
+  ln /home/maverikio/.themes/Catppuccin-Red-Dark/gtk-4.0/assets /home/maverikio/.config/gtk-4.0/assets -sf
+  ln /home/maverikio/.themes/Catppuccin-Red-Dark/gtk-4.0/gtk.css /home/maverikio/.config/gtk-4.0/gtk.css -sf
+  ln /home/maverikio/.themes/Catppuccin-Red-Dark/gtk-4.0/gtk-dark.css /home/maverikio/.config/gtk-3.0/gtk-dark.css -sf
+  sudo flatpak override --env=GTK_THEME=Catppuccin-Red-Dark
+  echo "\$hl = rgba(f38ba8ff)" >~/.config/hypr/accent.conf
+  echo "@import url('colors.css');@define-color hl @red;" >~/.config/waybar/accent.css
+  ;;
+"green")
+  gsettings set org.gnome.desktop.interface gtk-theme 'Catppuccin-Green-Dark'
+  ln /home/maverikio/.themes/Catppuccin-Green-Dark/gtk-4.0/assets /home/maverikio/.config/gtk-4.0/assets -sf
+  ln /home/maverikio/.themes/Catppuccin-Green-Dark/k/gtk-4.0/gtk.css /home/maverikio/.config/gtk-4.0/gtk.css -sf
+  ln /home/maverikio/.themes/Catppuccin-Green-Dark/gtk-4.0/gtk-dark.css /home/maverikio/.config/gtk-3.0/gtk-dark.css -sf
+  sudo flatpak override --env=GTK_THEME=Catppuccin-Green-Dark
+  echo "\$hl = rgba(a6e3a1ff)" >~/.config/hypr/accent.conf
+  echo "@import url('colors.css');@define-color hl @green;" >~/.config/waybar/accent.css
+  ;;
+"orange")
+  gsettings set org.gnome.desktop.interface gtk-theme 'Catppuccin-Orange-Dark'
+  ln /home/maverikio/.themes/Catppuccin-Orange-Dark/gtk-4.0/assets /home/maverikio/.config/gtk-4.0/assets -sf
+  ln /home/maverikio/.themes/Catppuccin-Orange-Dark/gtk-4.0/gtk.css /home/maverikio/.config/gtk-4.0/gtk.css -sf
+  ln /home/maverikio/.themes/Catppuccin-Orange-Dark/gtk-4.0/gtk-dark.css /home/maverikio/.config/gtk-3.0/gtk-dark.css -sf
+  sudo flatpak override --env=GTK_THEME=Catppuccin-Orange-Dark
+  echo "\$hl = rgba(fab387ff)" >~/.config/hypr/accent.conf
+  echo "@import url('colors.css');@define-color hl @peach;" >~/.config/waybar/accent.css
+  ;;
+*)
+  echo "Usage: accent {teal|purple|red|green|orange}"
+  exit 1
+  ;;
+esac
+
+~/projects/scripts/restart-waybar-hyprpaper waybar

@@ -1,0 +1,16 @@
+#! /bin/sh
+if [[ -e "/home/maverikio/.cache/wallpaper-set-random.lock" ]]; then
+  hyprctl notify 6 1000 0 "Found lockfile"
+  exit
+else
+  hyprctl notify 6 1000 0 "Changing Wallpaper..."
+  touch "/home/maverikio/.cache/wallpaper-set-random.lock"
+  CURRENT=/home/maverikio/Pictures/CURRENT
+  WALLPAPER_QUEUE=/home/maverikio/Pictures/WallpaperQueue/
+  hyprctl hyprpaper unload $CURRENT
+  NEW="$WALLPAPER_QUEUE$(ls $WALLPAPER_QUEUE | sort -R | tail -1)"
+  cp $NEW $CURRENT
+  hyprctl hyprpaper preload $CURRENT
+  hyprctl hyprpaper wallpaper "eDP-1,$CURRENT"
+  rm "/home/maverikio/.cache/wallpaper-set-random.lock"
+fi

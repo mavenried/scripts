@@ -1,0 +1,18 @@
+#! /bin/env python3
+import subprocess
+name = ''
+val = 0
+try:
+    ret = subprocess.run(["playerctl", "metadata", "--format", "{{trunc(title, 20)}}"], capture_output=True)
+    name = ret.stdout.decode().strip()
+    pos = int(subprocess.run(["playerctl", "metadata", "--format", "{{position}}"], capture_output=True).stdout.decode().strip())
+    length = int(subprocess.run(["playerctl", "metadata", "--format", "{{mpris:length}}"], capture_output=True).stdout.decode().strip())
+    val = pos/length*100
+except:
+    pass
+
+if name == "":
+    name = "Nothing Is Playing"
+
+out = f"  <b>« {name:^23.23} » [{val:0>3.0f}%]</b>"
+print(out)

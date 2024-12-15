@@ -1,0 +1,9 @@
+#! /bin/sh
+
+if [[ "$1" == "waybar" ]]; then
+  killall waybar
+  hyprctl dispatch exec waybar
+elif [[ "$1" == "hyprpaper" ]]; then
+  killall hyprpaper
+  hyprctl dispatch exec hyprpaper
+fi

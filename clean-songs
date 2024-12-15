@@ -1,0 +1,15 @@
+#! /bin/env python3
+import os
+import sys
+if len(sys.argv) != 2 or sys.argv[1] == "-h" or sys.argv[1] == "--help":
+    print("Usage: clean-songs <path>")
+
+    sys.exit(0)
+for file in os.listdir(sys.argv[1]):
+    name = file.split("-")
+    if len(name) < 2:
+        continue
+    else:
+        if file.is_file():
+            os.rename(file, "".join(name[1::]).strip())
+            print(f"{file} --> {name}")

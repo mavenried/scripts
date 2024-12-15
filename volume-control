@@ -1,0 +1,13 @@
+#! /bin/sh
+
+if [[ "$1" == "+" ]]; then
+  wpctl set-volume @DEFAULT_SINK@ .1+
+elif [[ "$1" == "-" ]]; then
+  wpctl set-volume @DEFAULT_SINK@ .1-
+elif [[ "$1" == "mute" ]]; then
+  wpctl set-mute @DEFAULT_SINK@ toggle
+fi
+
+if [[ "$(wpctl get-volume @DEFAULT_SINK@)" == "Volume: 1.10" ]]; then
+  wpctl set-volume @DEFAULT_SINK@ 1
+fi
