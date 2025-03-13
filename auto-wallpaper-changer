@@ -1,6 +1,6 @@
 #! /bin/sh
 
-while [[ true ]]; do
+while true; do
   wallpaper-set-random
-  sleep 5
+  sleep 30
 done
