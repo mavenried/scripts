@@ -1,0 +1,107 @@
+#! /bin/env python3
+from sys import argv
+from platformdirs import user_config_dir
+from json import load, dump
+from os.path import expanduser
+
+config_dir = user_config_dir("colorctl")
+
+
+def info(msg):
+    print("colorctl(\x1b[33minfo\x1b[0m): \x1b[33m" + msg + "\x1b[0m")
+
+
+def error(msg):
+    print("colorctl(\x1b[31merror\x1b[0m): \x1b[31m" + msg + "\x1b[0m")
+
+
+def apply():
+    for app in apps:
+        outfile = ""
+        try:
+            with open(expanduser(apps[app]["template"])) as f:
+                template = f.read()
+
+                i = 0
+                while i < (len(template) - 1):
+                    if template[i] == "$" and template[i + 1] == "[":
+                        varname = ""
+                        i += 2
+                        try:
+                            while template[i] != "]":
+                                varname += template[i]
+                                i += 1
+                            i += 1
+                            if varname in vars.keys():
+                                info(f"found var `{varname}` in {app} conf")
+                                outfile += str(vars[varname])
+                            else:
+                                error(f"found unknown var `{varname}` in {app} conf")
+                        except IndexError:
+                            error(f"unterminated variable substitution in {app}")
+                    outfile += template[i]
+                    i += 1
+
+            with open(expanduser(apps[app]["target"]), "w") as f:
+                f.write(outfile)
+
+        except FileNotFoundError:
+            error(f"no such template `{apps[app]['template']}` for app {app}")
+
+
+def helpctl():
+    print("""\
+Usage: 
+    colorctl [apply|vars|apps]
+
+Commands:
+    apply: applies the config.
+    vars: add or remove variables. [eg. +num=4, -color] 
+        (use with no args to list vars)
+    apps: add or remove variables. [eg. +app1=(target,template), -app2]
+        (use with no args to list apps)
+    help: display this help. """)
+
+
+def varsctl(p):
+    with open(config_dir + "/variables.json", "w") as f:
+        if p.startswith("+"):
+            varname, value = p[1:].split("=")
+            info(f"set `{varname}` to {value}")
+            vars[varname] = value
+        elif p.startswith("-"):
+            varname = p[1:]
+            if varname in vars.keys():
+                del vars[varname]
+            else:
+                error(f"no such variable `{varname}`")
+
+        dump(vars, f)
+
+
+def appsctl(p):
+    error("Unimplemented, directly edit .config/applications.json")
+
+
+vars = {}
+with open(config_dir + "/variables.json") as f:
+    vars = load(f)
+    apps = {}
+    with open(config_dir + "/applications.json") as f:
+        apps = load(f)
+if len(argv) == 1 or argv[1] in ("help", "-h", "--help"):
+    helpctl()
+elif argv[1] == "apply":
+    apply()
+elif argv[1] == "vars":
+    if len(argv) == 2:
+        for var in vars:
+            print(f"{var}={vars[var]}")
+    else:
+        varsctl(argv[2])
+elif argv[1] == "apps":
+    if len(argv) == 2:
+        for app in apps:
+            print(f"{app}={apps[app]}")
+    else:
+        appsctl(argv[2])

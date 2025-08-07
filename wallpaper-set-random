@@ -12,5 +12,8 @@ else
   cp $NEW $CURRENT
   hyprctl hyprpaper preload $CURRENT
   hyprctl hyprpaper wallpaper "eDP-1,$CURRENT"
+  magick ~/Pictures/CURRENT -scale 20% -blur 0x2.5 -scale 500% -colorize 50% -fill black ~/Pictures/C
+  mv ~/Pictures/C ~/Pictures/CURRENT_BLUR
   rm "/home/maverikio/.cache/wallpaper-set-random.lock"
+  hyprctl notify 6 1000 0 "Done."
 fi

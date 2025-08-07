@@ -8,25 +8,28 @@ case $1 in
     gsettings set org.gnome.desktop.interface accent-color teal
     gsettings set org.gnome.desktop.interface icon-theme Adwaita-Teal
 
-    ln /home/maverikio/.themes/Catppuccin-Teal-Dark/gtk-4.0/assets /home/maverikio/.config/gtk-4.0/assets -sf
-    ln /home/maverikio/.themes/Catppuccin-Teal-Dark/gtk-4.0/gtk.css /home/maverikio/.config/gtk-4.0/gtk.css -sf
-    ln /home/maverikio/.themes/Catppuccin-Teal-Dark/gtk-4.0/gtk-dark.css /home/maverikio/.config/gtk-4.0/gtk-dark.css -sf
+    ln ~/.themes/Catppuccin-Teal-Dark/gtk-4.0/assets ~/.config/gtk-4.0/assets -sf
+    ln ~/.themes/Catppuccin-Teal-Dark/gtk-4.0/gtk.css ~/.config/gtk-4.0/gtk.css -sf
+    ln ~/.themes/Catppuccin-Teal-Dark/gtk-4.0/gtk-dark.css ~/.config/gtk-4.0/gtk-dark.css -sf
 
     sudo flatpak override --env=GTK_THEME="Catppuccin-Teal-Dark"
     echo "\$hl = rgba(94e2d5ff)" >~/.config/hypr/accent.conf
+    echo "*{ accent: #94e2d5; }" >~/.config/rofi/accent.rasi
     echo "@import url('colors.css');@define-color hl @teal;" >~/.config/waybar/accent.css
+    colorctl vars +accent-color=\#94e2d5
     ;;
   "purple")
     gsettings set org.gnome.desktop.interface gtk-theme 'Catppuccin-Purple-Dark'
     gsettings set org.gnome.desktop.interface accent-color purple
     gsettings set org.gnome.desktop.interface icon-theme Adwaita-Purple
 
-    ln /home/maverikio/.themes/Catppuccin-Purple-Dark/gtk-4.0/assets /home/maverikio/.config/gtk-4.0/assets -sf
-    ln /home/maverikio/.themes/Catppuccin-Purple-Dark/gtk-4.0/gtk.css /home/maverikio/.config/gtk-4.0/gtk.css -sf
-    ln /home/maverikio/.themes/Catppuccin-Purple-Dark/gtk-4.0/gtk-dark.css /home/maverikio/.config/gtk-4.0/gtk-dark.css -sf
+    ln ~/.themes/Catppuccin-Purple-Dark/gtk-4.0/assets ~/.config/gtk-4.0/assets -sf
+    ln ~/.themes/Catppuccin-Purple-Dark/gtk-4.0/gtk.css ~/.config/gtk-4.0/gtk.css -sf
+    ln ~/.themes/Catppuccin-Purple-Dark/gtk-4.0/gtk-dark.css ~/.config/gtk-4.0/gtk-dark.css -sf
 
     sudo flatpak override --env=GTK_THEME=Catppuccin-Purple-Dark
     echo "\$hl = rgba(cba6f7ff)" >~/.config/hypr/accent.conf
+    echo "*{ accent: #cba6f7; }" >~/.config/rofi/accent.rasi
     echo "@import url('colors.css');@define-color hl @mauve;" >~/.config/waybar/accent.css
     ;;
   "red")
@@ -34,12 +37,13 @@ case $1 in
     gsettings set org.gnome.desktop.interface accent-color red
     gsettings set org.gnome.desktop.interface icon-theme Adwaita-Red
 
-    ln /home/maverikio/.themes/Catppuccin-Red-Dark/gtk-4.0/assets /home/maverikio/.config/gtk-4.0/assets -sf
-    ln /home/maverikio/.themes/Catppuccin-Red-Dark/gtk-4.0/gtk.css /home/maverikio/.config/gtk-4.0/gtk.css -sf
-    ln /home/maverikio/.themes/Catppuccin-Red-Dark/gtk-4.0/gtk-dark.css /home/maverikio/.config/gtk-4.0/gtk-dark.css -sf
+    ln ~/.themes/Catppuccin-Red-Dark/gtk-4.0/assets ~/.config/gtk-4.0/assets -sf
+    ln ~/.themes/Catppuccin-Red-Dark/gtk-4.0/gtk.css ~/.config/gtk-4.0/gtk.css -sf
+    ln ~/.themes/Catppuccin-Red-Dark/gtk-4.0/gtk-dark.css ~/.config/gtk-4.0/gtk-dark.css -sf
 
     sudo flatpak override --env=GTK_THEME=Catppuccin-Red-Dark
     echo "\$hl = rgba(f38ba8ff)" >~/.config/hypr/accent.conf
+    echo "*{ accent: #f38ba8; }" >~/.config/rofi/accent.rasi
     echo "@import url('colors.css');@define-color hl @red;" >~/.config/waybar/accent.css
     ;;
   "green")
@@ -47,12 +51,13 @@ case $1 in
     gsettings set org.gnome.desktop.interface accent-color green
     gsettings set org.gnome.desktop.interface icon-theme Adwaita-Green
 
-    ln /home/maverikio/.themes/Catppuccin-Green-Dark/gtk-4.0/assets /home/maverikio/.config/gtk-4.0/assets -sf
-    ln /home/maverikio/.themes/Catppuccin-Green-Dark/k/gtk-4.0/gtk.css /home/maverikio/.config/gtk-4.0/gtk.css -sf
-    ln /home/maverikio/.themes/Catppuccin-Green-Dark/gtk-4.0/gtk-dark.css /home/maverikio/.config/gtk-4.0/gtk-dark.css -sf
+    ln ~/.themes/Catppuccin-Green-Dark/gtk-4.0/assets ~/.config/gtk-4.0/assets -sf
+    ln ~/.themes/Catppuccin-Green-Dark/k/gtk-4.0/gtk.css ~/.config/gtk-4.0/gtk.css -sf
+    ln ~/.themes/Catppuccin-Green-Dark/gtk-4.0/gtk-dark.css ~/.config/gtk-4.0/gtk-dark.css -sf
 
     sudo flatpak override --env=GTK_THEME=Catppuccin-Green-Dark
     echo "\$hl = rgba(a6e3a1ff)" >~/.config/hypr/accent.conf
+    echo "*{ accent: #a6e3a1; }" >~/.config/rofi/accent.rasi
     echo "@import url('colors.css');@define-color hl @green;" >~/.config/waybar/accent.css
     ;;
   "orange")
@@ -60,12 +65,13 @@ case $1 in
     gsettings set org.gnome.desktop.interface accent-color orange
     gsettings set org.gnome.desktop.interface icon-theme Adwaita-Orange
 
-    ln /home/maverikio/.themes/Catppuccin-Orange-Dark/gtk-4.0/assets /home/maverikio/.config/gtk-4.0/assets -sf
-    ln /home/maverikio/.themes/Catppuccin-Orange-Dark/gtk-4.0/gtk.css /home/maverikio/.config/gtk-4.0/gtk.css -sf
-    ln /home/maverikio/.themes/Catppuccin-Orange-Dark/gtk-4.0/gtk-dark.css /home/maverikio/.config/gtk-4.0/gtk-dark.css -sf
+    ln ~/.themes/Catppuccin-Orange-Dark/gtk-4.0/assets ~/.config/gtk-4.0/assets -sf
+    ln ~/.themes/Catppuccin-Orange-Dark/gtk-4.0/gtk.css ~/.config/gtk-4.0/gtk.css -sf
+    ln ~/.themes/Catppuccin-Orange-Dark/gtk-4.0/gtk-dark.css ~/.config/gtk-4.0/gtk-dark.css -sf
 
     sudo flatpak override --env=GTK_THEME=Catppuccin-Orange-Dark
     echo "\$hl = rgba(fab387ff)" >~/.config/hypr/accent.conf
+    echo "*{ accent: #fab387; }" >~/.config/rofi/accent.rasi
     echo "@import url('colors.css');@define-color hl @peach;" >~/.config/waybar/accent.css
     ;;
 
@@ -79,12 +85,13 @@ case $1 in
     gsettings set org.gnome.desktop.interface accent-color purple
     gsettings set org.gnome.desktop.interface icon-theme 'gruvbox_dark'
 
-    ln /home/maverikio/.themes/Gruvbox-Pink-Dark/gtk-4.0/assets /home/maverikio/.config/gtk-4.0/assets -sf
-    ln /home/maverikio/.themes/Gruvbox-Pink-Dark/gtk-4.0/gtk.css /home/maverikio/.config/gtk-4.0/gtk.css -sf
-    ln /home/maverikio/.themes/Gruvbox-Pink-Dark/gtk-4.0/gtk.css /home/maverikio/.config/gtk-4.0/gtk-dark.css -sf
+    ln ~/.themes/Gruvbox-Pink-Dark/gtk-4.0/assets ~/.config/gtk-4.0/assets -sf
+    ln ~/.themes/Gruvbox-Pink-Dark/gtk-4.0/gtk.css ~/.config/gtk-4.0/gtk.css -sf
+    ln ~/.themes/Gruvbox-Pink-Dark/gtk-4.0/gtk.css ~/.config/gtk-4.0/gtk-dark.css -sf
 
     sudo flatpak override --env=GTK_THEME=Gruvbox-Pink-Dark
     echo "\$hl = rgba(d3869bff)" >~/.config/hypr/accent.conf
+    echo "*{ accent: #d3869b; }" >~/.config/rofi/accent.rasi
     echo "@import url('colors.css');@define-color hl @purple;" >~/.config/waybar/accent.css
     ;;
   aqua)
@@ -92,12 +99,13 @@ case $1 in
     gsettings set org.gnome.desktop.interface accent-color teal
     gsettings set org.gnome.desktop.interface icon-theme 'gruvbox_dark'
 
-    ln /home/maverikio/.themes/Gruvbox-Teal-Dark/gtk-4.0/assets /home/maverikio/.config/gtk-4.0/assets -sf
-    ln /home/maverikio/.themes/Gruvbox-Teal-Dark/gtk-4.0/gtk.css /home/maverikio/.config/gtk-4.0/gtk.css -sf
-    ln /home/maverikio/.themes/Gruvbox-Teal-Dark/gtk-4.0/gtk.css /home/maverikio/.config/gtk-4.0/gtk-dark.css -sf
+    ln ~/.themes/Gruvbox-Teal-Dark/gtk-4.0/assets ~/.config/gtk-4.0/assets -sf
+    ln ~/.themes/Gruvbox-Teal-Dark/gtk-4.0/gtk.css ~/.config/gtk-4.0/gtk.css -sf
+    ln ~/.themes/Gruvbox-Teal-Dark/gtk-4.0/gtk.css ~/.config/gtk-4.0/gtk-dark.css -sf
 
     sudo flatpak override --env=GTK_THEME=Gruvbox-Teal-Dark
     echo "\$hl = rgba(689d6aff)" >~/.config/hypr/accent.conf
+    echo "*{ accent: #689d6a; }" >~/.config/rofi/accent.rasi
     echo "@import url('colors.css');@define-color hl @aqua;" >~/.config/waybar/accent.css
     ;;
   orange)
@@ -105,12 +113,13 @@ case $1 in
     gsettings set org.gnome.desktop.interface accent-color orange
     gsettings set org.gnome.desktop.interface icon-theme 'gruvbox_dark'
 
-    ln /home/maverikio/.themes/Gruvbox-Orange-Dark/gtk-4.0/assets /home/maverikio/.config/gtk-4.0/assets -sf
-    ln /home/maverikio/.themes/Gruvbox-Orange-Dark/gtk-4.0/gtk.css /home/maverikio/.config/gtk-4.0/gtk.css -sf
-    ln /home/maverikio/.themes/Gruvbox-Orange-Dark/gtk-4.0/gtk.css /home/maverikio/.config/gtk-4.0/gtk-dark.css -sf
+    ln ~/.themes/Gruvbox-Orange-Dark/gtk-4.0/assets ~/.config/gtk-4.0/assets -sf
+    ln ~/.themes/Gruvbox-Orange-Dark/gtk-4.0/gtk.css ~/.config/gtk-4.0/gtk.css -sf
+    ln ~/.themes/Gruvbox-Orange-Dark/gtk-4.0/gtk.css ~/.config/gtk-4.0/gtk-dark.css -sf
 
     sudo flatpak override --env=GTK_THEME=Gruvbox-Orange-Dark
     echo "\$hl = rgba(fe8019ff)" >~/.config/hypr/accent.conf
+    echo "*{ accent: #fe8019; }" >~/.config/rofi/accent.rasi
     echo "@import url('colors.css');@define-color hl @orange;" >~/.config/waybar/accent.css
     ;;
   green)
@@ -118,25 +127,27 @@ case $1 in
     gsettings set org.gnome.desktop.interface accent-color green
     gsettings set org.gnome.desktop.interface icon-theme 'gruvbox_dark'
 
-    ln /home/maverikio/.themes/Gruvbox-Green-Dark/gtk-4.0/assets /home/maverikio/.config/gtk-4.0/assets -sf
-    ln /home/maverikio/.themes/Gruvbox-Green-Dark/gtk-4.0/gtk.css /home/maverikio/.config/gtk-4.0/gtk.css -sf
-    ln /home/maverikio/.themes/Gruvbox-Green-Dark/gtk-4.0/gtk.css /home/maverikio/.config/gtk-4.0/gtk-dark.css -sf
+    ln ~/.themes/Gruvbox-Green-Dark/gtk-4.0/assets ~/.config/gtk-4.0/assets -sf
+    ln ~/.themes/Gruvbox-Green-Dark/gtk-4.0/gtk.css ~/.config/gtk-4.0/gtk.css -sf
+    ln ~/.themes/Gruvbox-Green-Dark/gtk-4.0/gtk.css ~/.config/gtk-4.0/gtk-dark.css -sf
 
     sudo flatpak override --env=GTK_THEME=Gruvbox-Green-Dark
     echo "\$hl = rgba(b8bb26ff)" >~/.config/hypr/accent.conf
+    echo "*{ accent: #9b8bb26; }" >~/.config/rofi/accent.rasi
     echo "@import url('colors.css');@define-color hl @green;" >~/.config/waybar/accent.css
     ;;
   blue)
-    gsettings set org.gnome.desktop.interface gtk-theme 'Gruvbox-Blue-Dark'
+    gsettings set org.gnome.desktop.interface gtk-theme 'Gruvbox-Dark'
     gsettings set org.gnome.desktop.interface accent-color blue
     gsettings set org.gnome.desktop.interface icon-theme 'gruvbox_dark'
 
-    ln /home/maverikio/.themes/Gruvbox-Blue-Dark/gtk-4.0/assets /home/maverikio/.config/gtk-4.0/assets -sf
-    ln /home/maverikio/.themes/Gruvbox-Blue-Dark/gtk-4.0/gtk.css /home/maverikio/.config/gtk-4.0/gtk.css -sf
-    ln /home/maverikio/.themes/Gruvbox-Blue-Dark/gtk-4.0/gtk.css /home/maverikio/.config/gtk-4.0/gtk-dark.css -sf
+    ln ~/.themes/Gruvbox-Dark/gtk-4.0/assets ~/.config/gtk-4.0/assets -sf
+    ln ~/.themes/Gruvbox-Dark/gtk-4.0/gtk.css ~/.config/gtk-4.0/gtk.css -sf
+    ln ~/.themes/Gruvbox-Dark/gtk-4.0/gtk.css ~/.config/gtk-4.0/gtk-dark.css -sf
 
-    sudo flatpak override --env=GTK_THEME=Gruvbox-Blue-Dark
+    sudo flatpak override --env=GTK_THEME=Gruvbox-Dark
     echo "\$hl = rgba(458588ff)" >~/.config/hypr/accent.conf
+    echo "*{ accent: #458588; }" >~/.config/rofi/accent.rasi
     echo "@import url('colors.css');@define-color hl @blue;" >~/.config/waybar/accent.css
     ;;
   red)
@@ -144,12 +155,13 @@ case $1 in
     gsettings set org.gnome.desktop.interface accent-color red
     gsettings set org.gnome.desktop.interface icon-theme 'gruvbox_dark'
 
-    ln /home/maverikio/.themes/Gruvbox-Red-Dark/gtk-4.0/assets /home/maverikio/.config/gtk-4.0/assets -sf
-    ln /home/maverikio/.themes/Gruvbox-Red-Dark/gtk-4.0/gtk.css /home/maverikio/.config/gtk-4.0/gtk.css -sf
-    ln /home/maverikio/.themes/Gruvbox-Red-Dark/gtk-4.0/gtk.css /home/maverikio/.config/gtk-4.0/gtk-dark.css -sf
+    ln ~/.themes/Gruvbox-Red-Dark/gtk-4.0/assets ~/.config/gtk-4.0/assets -sf
+    ln ~/.themes/Gruvbox-Red-Dark/gtk-4.0/gtk.css ~/.config/gtk-4.0/gtk.css -sf
+    ln ~/.themes/Gruvbox-Red-Dark/gtk-4.0/gtk.css ~/.config/gtk-4.0/gtk-dark.css -sf
 
     sudo flatpak override --env=GTK_THEME=Gruvbox-Red-Dark
     echo "\$hl = rgba(cc241dff)" >~/.config/hypr/accent.conf
+    echo "*{ accent: #cc241d; }" >~/.config/rofi/accent.rasi
     echo "@import url('colors.css');@define-color hl @red;" >~/.config/waybar/accent.css
     ;;
   yellow)
@@ -157,12 +169,13 @@ case $1 in
     gsettings set org.gnome.desktop.interface accent-color yellow
     gsettings set org.gnome.desktop.interface icon-theme 'gruvbox_dark'
 
-    ln /home/maverikio/.themes/Gruvbox-Yellow-Dark/gtk-4.0/assets /home/maverikio/.config/gtk-4.0/assets -sf
-    ln /home/maverikio/.themes/Gruvbox-Yellow-Dark/gtk-4.0/gtk.css /home/maverikio/.config/gtk-4.0/gtk.css -sf
-    ln /home/maverikio/.themes/Gruvbox-Yellow-Dark/gtk-4.0/gtk.css /home/maverikio/.config/gtk-4.0/gtk-dark.css -sf
+    ln ~/.themes/Gruvbox-Yellow-Dark/gtk-4.0/assets ~/.config/gtk-4.0/assets -sf
+    ln ~/.themes/Gruvbox-Yellow-Dark/gtk-4.0/gtk.css ~/.config/gtk-4.0/gtk.css -sf
+    ln ~/.themes/Gruvbox-Yellow-Dark/gtk-4.0/gtk.css ~/.config/gtk-4.0/gtk-dark.css -sf
 
     sudo flatpak override --env=GTK_THEME=Gruvbox-Yellow-Dark
     echo "\$hl = rgba(d79921ff)" >~/.config/hypr/accent.conf
+    echo "*{ accent: #d79921; }" >~/.config/rofi/accent.rasi
     echo "@import url('colors.css');@define-color hl @yellow;" >~/.config/waybar/accent.css
     ;;
   esac
