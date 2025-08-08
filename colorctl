@@ -80,7 +80,20 @@ def varsctl(p):
 
 
 def appsctl(p):
-    error("Unimplemented, directly edit .config/applications.json")
+    with open(config_dir + "/applications.json", "w") as f:
+        if p.startswith("+"):
+            appname, value = p[1:].split("=")
+            temp, targ = value.split(",")
+            info(f"added `{appname}` with- \n template: {temp}\n target: {targ}")
+            apps[appname] = {"target": targ, "template": temp}
+        elif p.startswith("-"):
+            appname = p[1:]
+            if appname in apps.keys():
+                del apps[appname]
+            else:
+                error(f"no such app `{appname}`")
+
+        dump(apps, f)
 
 
 vars = {}
@@ -104,4 +117,7 @@ elif argv[1] == "apps":
         for app in apps:
             print(f"{app}={apps[app]}")
     else:
-        appsctl(argv[2])
+        appsctl("".join(argv[2:]))
+
+else:
+    error(f"invalid option `{argv[1]}`")

@@ -18,7 +18,7 @@ else
     ffmpeg -i ~/Pictures/WallpaperQueue/GreenCat.mp4 -frames:v 1 /tmp/CLFF.png && mv /tmp/CLFF.png ~/Pictures/CURRENT-LIVE-FF
   fi
 
-  hyprctl dispatch exec "swww-daemon --no-cache"
+  swww-daemon --no-cache &
   swww img ~/Pictures/CURRENT
   swww img ~/Pictures/CURRENT-LIVE
 # ifmis => we blit the first frame and wait for the gif to load

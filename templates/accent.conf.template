@@ -1,1 +1,1 @@
-$hl = rgba($[accent-color]ff)
+$hl = rgba($[accent-color-clean]ff)

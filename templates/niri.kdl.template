@@ -1,7 +1,7 @@
 input {
     keyboard {
         xkb {
-
+          options "caps:escape"
 
         }
         numlock
@@ -18,14 +18,23 @@ input {
     }
 
 }
-/-output "eDP-1" {
-mode "1920x1080@120.030"
-scale 2
-transform "normal"
-position x=1280 y=0
+overview {
+    zoom 0.9
+    backdrop-color "$[inactive-color]"
+
+    workspace-shadow {
+        softness 40
+        spread 10
+        offset x=0 y=10
+        color "#00000050"
+    }
+  }
+
+environment {
+  DISPLAY ":0"
 }
 layout {
-    gaps 9
+    gaps 5
     center-focused-column "never"
     preset-column-widths {
         proportion 0.25
@@ -43,16 +52,16 @@ layout {
         proportion 0.5
     }
     focus-ring {
+        off
         width 1.5
         active-color "$[accent-color]"
         inactive-color "$[inactive-color]"
 
     }
     border {
-        off
-        width 4
-        active-color "#ffc87f"
-        inactive-color "#505050"
+        width 1.5
+        active-color "$[accent-color]"
+        inactive-color "$[inactive-color]"
         urgent-color "#9b0000"
     }
     shadow {
@@ -67,30 +76,17 @@ layout {
     }
 }
 spawn-at-startup "waybar"
-spawn-at-startup "swww-daemon"
+spawn-at-startup "xwayland-satellite"
+spawn-at-startup "~/projects/scripts/wallpaper-init"
 screenshot-path "~/Pictures/Screenshots/Screenshot from %Y-%m-%d %H-%M-%S.png"
 animations {
 
 
 }
 window-rule {
-    match app-id="^org\\.wezfurlong\\.wezterm$"
-    default-column-width {
-
-    }
-}
-window-rule {
-    match app-id="firefox$" title="^Picture-in-Picture$"
-    open-floating true
-}
-/-window-rule {
-match app-id=r#"^org\.keepassxc\.KeePassXC$"#
-match app-id=r#"^org\.gnome\.World\.Secrets$"#
-block-out-from "screen-capture"
-}
-window-rule {
     geometry-corner-radius 10
     clip-to-geometry true
+    draw-border-with-background false
 }
 binds {
     Mod+Shift+Slash {
@@ -411,7 +407,7 @@ binds {
     Mod+Escape allow-inhibiting=false {
         toggle-keyboard-shortcuts-inhibit
     }
-    Mod+Shift+E {
+    Mod+M {
         quit
     }
     Ctrl+Alt+Delete {
@@ -420,4 +416,8 @@ binds {
     Mod+Shift+P {
         power-off-monitors
     }
+}
+
+hotkey-overlay {
+    skip-at-startup
 }
