@@ -1,5 +1,7 @@
 #! /bin/env python3
+import subprocess
 from sys import argv
+from os import environ
 from platformdirs import user_config_dir
 from json import load, dump
 from os.path import expanduser
@@ -64,7 +66,7 @@ Commands:
 
 
 def varsctl(p):
-    with open(config_dir + "/variables.json", "w") as f:
+    try:
         if p.startswith("+"):
             varname, value = p[1:].split("=")
             info(f"set `{varname}` to {value}")
@@ -75,12 +77,22 @@ def varsctl(p):
                 del vars[varname]
             else:
                 error(f"no such variable `{varname}`")
+    except Exception as e:
+        error(f"internal: {e}")
 
+    with open(config_dir + "/variables.json", "w") as f:
         dump(vars, f)
 
 
+def pick_with_fzf(options):
+    fzf = subprocess.run(
+        ["fzf"], input="\n".join(options), text=True, capture_output=True
+    )
+    return fzf.stdout.strip() if fzf.returncode == 0 else None
+
+
 def appsctl(p):
-    with open(config_dir + "/applications.json", "w") as f:
+    try:
         if p.startswith("+"):
             appname, value = p[1:].split("=")
             temp, targ = value.split(",")
@@ -92,7 +104,10 @@ def appsctl(p):
                 del apps[appname]
             else:
                 error(f"no such app `{appname}`")
+    except Exception as e:
+        error(f"internal: {e}")
 
+    with open(config_dir + "/applications.json", "w") as f:
         dump(apps, f)
 
 
@@ -118,6 +133,22 @@ elif argv[1] == "apps":
             print(f"{app}={apps[app]}")
     else:
         appsctl("".join(argv[2:]))
+elif argv[1] == "edit":
+    editor = environ.get("EDITOR")
+    if len(argv) == 2:
+        app = pick_with_fzf(apps.keys())
+        if app is not None:
+            subprocess.run([editor, expanduser(apps[app]["template"])])
+            info(f"opened {apps[app]['template']} in {editor}")
+        else:
+            info("nothing picked!")
+    else:
+        for app in argv[2:]:
+            if app in apps:
+                subprocess.run([editor, expanduser(apps[app]["template"])])
+                info(f"opened {apps[app]['template']} in {editor}")
+            else:
+                error("app does not exist.")
 
 else:
     error(f"invalid option `{argv[1]}`")
