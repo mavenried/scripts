@@ -1,182 +1,77 @@
 #! /bin/bash
+
+set() {
+  echo "Setting Themes..."
+  gsettings set org.gnome.desktop.interface gtk-theme "$1"
+  gsettings set org.gnome.desktop.interface accent-color "$2"
+  gsettings set org.gnome.desktop.interface icon-theme "$3"
+
+  echo "Linking Files..."
+  ln ~/.themes/"$1"/gtk-4.0/assets ~/.config/gtk-4.0/assets -sf
+  ln ~/.themes/"$1"/gtk-4.0/gtk.css ~/.config/gtk-4.0/gtk.css -sf
+  ln ~/.themes/"$1"/gtk-4.0/gtk-dark.css ~/.config/gtk-4.0/gtk-dark.css -sf
+
+  echo "Updating colorctl..."
+  colorctl vars +accent-color=\#"$4"
+  colorctl vars +accent-color-clean="$4"
+  colorctl vars +waybar-color="$5"
+
+  echo "Applying colorctl..."
+  colorctl apply
+
+  cat ~/.config/niri/pieces/* >~/.config/niri/config.kdl
+
+}
 case $1 in
 "cpcn")
   ln ~/.config/waybar/colors/catppuccin-mocha.css ~/.config/waybar/colors.css -sf
   case $2 in
   "teal")
-    gsettings set org.gnome.desktop.interface gtk-theme 'Catppuccin-Teal-Dark'
-    gsettings set org.gnome.desktop.interface accent-color teal
-    gsettings set org.gnome.desktop.interface icon-theme Adwaita-Teal
-
-    ln ~/.themes/Catppuccin-Teal-Dark/gtk-4.0/assets ~/.config/gtk-4.0/assets -sf
-    ln ~/.themes/Catppuccin-Teal-Dark/gtk-4.0/gtk.css ~/.config/gtk-4.0/gtk.css -sf
-    ln ~/.themes/Catppuccin-Teal-Dark/gtk-4.0/gtk-dark.css ~/.config/gtk-4.0/gtk-dark.css -sf
-
-    sudo flatpak override --env=GTK_THEME="Catppuccin-Teal-Dark"
-    echo "\$hl = rgba(94e2d5ff)" >~/.config/hypr/accent.conf
-    echo "*{ accent: #94e2d5; }" >~/.config/rofi/accent.rasi
-    echo "@import url('colors.css');@define-color hl @teal;" >~/.config/waybar/accent.css
-    colorctl vars +accent-color=\#94e2d5
+    set Catppuccin-Teal-Dark teal Adwaita-Teal 94e2d5 teal
     ;;
   "purple")
-    gsettings set org.gnome.desktop.interface gtk-theme 'Catppuccin-Purple-Dark'
-    gsettings set org.gnome.desktop.interface accent-color purple
-    gsettings set org.gnome.desktop.interface icon-theme Adwaita-Purple
-
-    ln ~/.themes/Catppuccin-Purple-Dark/gtk-4.0/assets ~/.config/gtk-4.0/assets -sf
-    ln ~/.themes/Catppuccin-Purple-Dark/gtk-4.0/gtk.css ~/.config/gtk-4.0/gtk.css -sf
-    ln ~/.themes/Catppuccin-Purple-Dark/gtk-4.0/gtk-dark.css ~/.config/gtk-4.0/gtk-dark.css -sf
-
-    sudo flatpak override --env=GTK_THEME=Catppuccin-Purple-Dark
-    echo "\$hl = rgba(cba6f7ff)" >~/.config/hypr/accent.conf
-    echo "*{ accent: #cba6f7; }" >~/.config/rofi/accent.rasi
-    echo "@import url('colors.css');@define-color hl @mauve;" >~/.config/waybar/accent.css
+    set Catppuccin-Red-Dark purple Adwaita-Purple cba6f7 mauve
     ;;
   "red")
-    gsettings set org.gnome.desktop.interface gtk-theme 'Catppuccin-Red-Dark'
-    gsettings set org.gnome.desktop.interface accent-color red
-    gsettings set org.gnome.desktop.interface icon-theme Adwaita-Red
-
-    ln ~/.themes/Catppuccin-Red-Dark/gtk-4.0/assets ~/.config/gtk-4.0/assets -sf
-    ln ~/.themes/Catppuccin-Red-Dark/gtk-4.0/gtk.css ~/.config/gtk-4.0/gtk.css -sf
-    ln ~/.themes/Catppuccin-Red-Dark/gtk-4.0/gtk-dark.css ~/.config/gtk-4.0/gtk-dark.css -sf
-
-    sudo flatpak override --env=GTK_THEME=Catppuccin-Red-Dark
-    echo "\$hl = rgba(f38ba8ff)" >~/.config/hypr/accent.conf
-    echo "*{ accent: #f38ba8; }" >~/.config/rofi/accent.rasi
-    echo "@import url('colors.css');@define-color hl @red;" >~/.config/waybar/accent.css
+    set Catppuccin-Red-Dark red Adwaita-Red f38ba8 red
     ;;
   "green")
-    gsettings set org.gnome.desktop.interface gtk-theme 'Catppuccin-Green-Dark'
-    gsettings set org.gnome.desktop.interface accent-color green
-    gsettings set org.gnome.desktop.interface icon-theme Adwaita-Green
-
-    ln ~/.themes/Catppuccin-Green-Dark/gtk-4.0/assets ~/.config/gtk-4.0/assets -sf
-    ln ~/.themes/Catppuccin-Green-Dark/k/gtk-4.0/gtk.css ~/.config/gtk-4.0/gtk.css -sf
-    ln ~/.themes/Catppuccin-Green-Dark/gtk-4.0/gtk-dark.css ~/.config/gtk-4.0/gtk-dark.css -sf
-
-    sudo flatpak override --env=GTK_THEME=Catppuccin-Green-Dark
-    echo "\$hl = rgba(a6e3a1ff)" >~/.config/hypr/accent.conf
-    echo "*{ accent: #a6e3a1; }" >~/.config/rofi/accent.rasi
-    echo "@import url('colors.css');@define-color hl @green;" >~/.config/waybar/accent.css
+    set Catppuccin-Green-Dark green Adwaita-Green a6e3a1 green
     ;;
   "orange")
-    gsettings set org.gnome.desktop.interface gtk-theme 'Catppuccin-Orange-Dark'
-    gsettings set org.gnome.desktop.interface accent-color orange
-    gsettings set org.gnome.desktop.interface icon-theme Adwaita-Orange
-
-    ln ~/.themes/Catppuccin-Orange-Dark/gtk-4.0/assets ~/.config/gtk-4.0/assets -sf
-    ln ~/.themes/Catppuccin-Orange-Dark/gtk-4.0/gtk.css ~/.config/gtk-4.0/gtk.css -sf
-    ln ~/.themes/Catppuccin-Orange-Dark/gtk-4.0/gtk-dark.css ~/.config/gtk-4.0/gtk-dark.css -sf
-
-    sudo flatpak override --env=GTK_THEME=Catppuccin-Orange-Dark
-    echo "\$hl = rgba(fab387ff)" >~/.config/hypr/accent.conf
-    echo "*{ accent: #fab387; }" >~/.config/rofi/accent.rasi
-    echo "@import url('colors.css');@define-color hl @peach;" >~/.config/waybar/accent.css
+    set Catppuccin-Orange-Dark orange Adwaita-Orange fab387 peach
     ;;
-
+  *)
+    echo "Not a valid vairant"
+    ;;
   esac
   ;;
 "gruv")
   ln ~/.config/waybar/colors/gruvbox.css ~/.config/waybar/colors.css -sf
   case $2 in
   purple)
-    gsettings set org.gnome.desktop.interface gtk-theme 'Gruvbox-Pink-Dark'
-    gsettings set org.gnome.desktop.interface accent-color purple
-    gsettings set org.gnome.desktop.interface icon-theme 'gruvbox_dark'
-
-    ln ~/.themes/Gruvbox-Pink-Dark/gtk-4.0/assets ~/.config/gtk-4.0/assets -sf
-    ln ~/.themes/Gruvbox-Pink-Dark/gtk-4.0/gtk.css ~/.config/gtk-4.0/gtk.css -sf
-    ln ~/.themes/Gruvbox-Pink-Dark/gtk-4.0/gtk.css ~/.config/gtk-4.0/gtk-dark.css -sf
-
-    sudo flatpak override --env=GTK_THEME=Gruvbox-Pink-Dark
-    echo "\$hl = rgba(d3869bff)" >~/.config/hypr/accent.conf
-    echo "*{ accent: #d3869b; }" >~/.config/rofi/accent.rasi
-    echo "@import url('colors.css');@define-color hl @purple;" >~/.config/waybar/accent.css
+    set Gruvbox-Pink-Dark purple gruvbox_dark d3869b purple
     ;;
   aqua)
-    gsettings set org.gnome.desktop.interface gtk-theme 'Gruvbox-Teal-Dark'
-    gsettings set org.gnome.desktop.interface accent-color teal
-    gsettings set org.gnome.desktop.interface icon-theme 'gruvbox_dark'
-
-    ln ~/.themes/Gruvbox-Teal-Dark/gtk-4.0/assets ~/.config/gtk-4.0/assets -sf
-    ln ~/.themes/Gruvbox-Teal-Dark/gtk-4.0/gtk.css ~/.config/gtk-4.0/gtk.css -sf
-    ln ~/.themes/Gruvbox-Teal-Dark/gtk-4.0/gtk.css ~/.config/gtk-4.0/gtk-dark.css -sf
-
-    sudo flatpak override --env=GTK_THEME=Gruvbox-Teal-Dark
-    echo "\$hl = rgba(689d6aff)" >~/.config/hypr/accent.conf
-    echo "*{ accent: #689d6a; }" >~/.config/rofi/accent.rasi
-    echo "@import url('colors.css');@define-color hl @aqua;" >~/.config/waybar/accent.css
+    set Gruvbox-Teal-Dark teal gruvbox_dark 689d6a aqua
     ;;
   orange)
-    gsettings set org.gnome.desktop.interface gtk-theme 'Gruvbox-Orange-Dark'
-    gsettings set org.gnome.desktop.interface accent-color orange
-    gsettings set org.gnome.desktop.interface icon-theme 'gruvbox_dark'
-
-    ln ~/.themes/Gruvbox-Orange-Dark/gtk-4.0/assets ~/.config/gtk-4.0/assets -sf
-    ln ~/.themes/Gruvbox-Orange-Dark/gtk-4.0/gtk.css ~/.config/gtk-4.0/gtk.css -sf
-    ln ~/.themes/Gruvbox-Orange-Dark/gtk-4.0/gtk.css ~/.config/gtk-4.0/gtk-dark.css -sf
-
-    sudo flatpak override --env=GTK_THEME=Gruvbox-Orange-Dark
-    echo "\$hl = rgba(fe8019ff)" >~/.config/hypr/accent.conf
-    echo "*{ accent: #fe8019; }" >~/.config/rofi/accent.rasi
-    echo "@import url('colors.css');@define-color hl @orange;" >~/.config/waybar/accent.css
+    set Gruvbox-Orange-Dark orange gruvbox_dark fe8019 orange
     ;;
   green)
-    gsettings set org.gnome.desktop.interface gtk-theme 'Gruvbox-Green-Dark'
-    gsettings set org.gnome.desktop.interface accent-color green
-    gsettings set org.gnome.desktop.interface icon-theme 'gruvbox_dark'
-
-    ln ~/.themes/Gruvbox-Green-Dark/gtk-4.0/assets ~/.config/gtk-4.0/assets -sf
-    ln ~/.themes/Gruvbox-Green-Dark/gtk-4.0/gtk.css ~/.config/gtk-4.0/gtk.css -sf
-    ln ~/.themes/Gruvbox-Green-Dark/gtk-4.0/gtk.css ~/.config/gtk-4.0/gtk-dark.css -sf
-
-    sudo flatpak override --env=GTK_THEME=Gruvbox-Green-Dark
-    echo "\$hl = rgba(b8bb26ff)" >~/.config/hypr/accent.conf
-    echo "*{ accent: #9b8bb26; }" >~/.config/rofi/accent.rasi
-    echo "@import url('colors.css');@define-color hl @green;" >~/.config/waybar/accent.css
+    set Gruvbox-Green-Dark green gruvbox_dark b8bb26 green
     ;;
   blue)
-    gsettings set org.gnome.desktop.interface gtk-theme 'Gruvbox-Dark'
-    gsettings set org.gnome.desktop.interface accent-color blue
-    gsettings set org.gnome.desktop.interface icon-theme 'gruvbox_dark'
-
-    ln ~/.themes/Gruvbox-Dark/gtk-4.0/assets ~/.config/gtk-4.0/assets -sf
-    ln ~/.themes/Gruvbox-Dark/gtk-4.0/gtk.css ~/.config/gtk-4.0/gtk.css -sf
-    ln ~/.themes/Gruvbox-Dark/gtk-4.0/gtk.css ~/.config/gtk-4.0/gtk-dark.css -sf
-
-    sudo flatpak override --env=GTK_THEME=Gruvbox-Dark
-    echo "\$hl = rgba(458588ff)" >~/.config/hypr/accent.conf
-    echo "*{ accent: #458588; }" >~/.config/rofi/accent.rasi
-    echo "@import url('colors.css');@define-color hl @blue;" >~/.config/waybar/accent.css
+    set Gruvbox-Dark blue gruvbox_dark 458588 blue
     ;;
   red)
-    gsettings set org.gnome.desktop.interface gtk-theme 'Gruvbox-Red-Dark'
-    gsettings set org.gnome.desktop.interface accent-color red
-    gsettings set org.gnome.desktop.interface icon-theme 'gruvbox_dark'
-
-    ln ~/.themes/Gruvbox-Red-Dark/gtk-4.0/assets ~/.config/gtk-4.0/assets -sf
-    ln ~/.themes/Gruvbox-Red-Dark/gtk-4.0/gtk.css ~/.config/gtk-4.0/gtk.css -sf
-    ln ~/.themes/Gruvbox-Red-Dark/gtk-4.0/gtk.css ~/.config/gtk-4.0/gtk-dark.css -sf
-
-    sudo flatpak override --env=GTK_THEME=Gruvbox-Red-Dark
-    echo "\$hl = rgba(cc241dff)" >~/.config/hypr/accent.conf
-    echo "*{ accent: #cc241d; }" >~/.config/rofi/accent.rasi
-    echo "@import url('colors.css');@define-color hl @red;" >~/.config/waybar/accent.css
+    set Gruvbox-Red-Dark red gruvbox_dark cc241d red
     ;;
   yellow)
-    gsettings set org.gnome.desktop.interface gtk-theme 'Gruvbox-Yellow-Dark'
-    gsettings set org.gnome.desktop.interface accent-color yellow
-    gsettings set org.gnome.desktop.interface icon-theme 'gruvbox_dark'
-
-    ln ~/.themes/Gruvbox-Yellow-Dark/gtk-4.0/assets ~/.config/gtk-4.0/assets -sf
-    ln ~/.themes/Gruvbox-Yellow-Dark/gtk-4.0/gtk.css ~/.config/gtk-4.0/gtk.css -sf
-    ln ~/.themes/Gruvbox-Yellow-Dark/gtk-4.0/gtk.css ~/.config/gtk-4.0/gtk-dark.css -sf
-
-    sudo flatpak override --env=GTK_THEME=Gruvbox-Yellow-Dark
-    echo "\$hl = rgba(d79921ff)" >~/.config/hypr/accent.conf
-    echo "*{ accent: #d79921; }" >~/.config/rofi/accent.rasi
-    echo "@import url('colors.css');@define-color hl @yellow;" >~/.config/waybar/accent.css
+    set Gruvbox-Yellow-Dark yellow gruvbox_dark d79921 yellow
+    ;;
+  *)
+    echo "Not a valid vairant"
     ;;
   esac
   ;;

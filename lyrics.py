@@ -1,9 +1,9 @@
 #!/bin/env python3
 from bs4 import BeautifulSoup
 import urllib.request
-from sys import stdin
+from sys import argv
 
-singer, song = stdin.read().strip().split(";")
+song, singer = "".join(argv[1:]).strip().split("by")
 singer = "".join([i.lower() for i in singer if not i.isspace()])
 song = "".join([i.lower() for i in song if not i.isspace()])
 url = "https://www.azlyrics.com/lyrics/" + singer + "/" + song + ".html"
