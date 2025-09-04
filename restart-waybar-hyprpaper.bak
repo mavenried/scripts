@@ -1,0 +1,42 @@
+#! /bin/zsh
+<<<<<<< HEAD
+
+run() {
+  if [[ "$DESKTOP_SESSION" == "niri" ]]; then
+    niri msg action spawn -- "$1"
+  elif [[ "$DESKTOP_SESSION" == "hyprland" ]]; then
+    hyprctl dispatch exec "$1"
+    echo ran
+  fi
+}
+=======
+>>>>>>> cf19a6821daa0e2321fc329141a6fc2f9cbfa6dc
+
+run() {
+  if [[ "$DESKTOP_SESSION" == "niri" ]]; then
+    niri msg action spawn -- "$1"
+  elif [[ "$DESKTOP_SESSION" == "hyprland" ]]; then
+    hyprctl dispatch exec "$1"
+  fi
+}
+if [[ "$1" == "waybar" ]]; then
+<<<<<<< HEAD
+  killall waybar &
+  run waybar
+
+elif [[ "$1" == "hyprpaper" ]]; then
+  killall hyprpaper &
+  run hyprpaper
+
+elif [[ "$1" == "sww" ]]; then
+  printf "Uhmm..."
+=======
+  killall waybar
+  run waybar
+  echo ran
+
+elif [[ "$1" == "hyprpaper" ]]; then
+  killall hyprpaper
+  run hyprpaper
+>>>>>>> cf19a6821daa0e2321fc329141a6fc2f9cbfa6dc
+fi
