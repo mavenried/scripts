@@ -1,5 +1,6 @@
 #! /bin/env python3
 import subprocess
+from pprint import pprint
 from sys import argv
 from os import environ
 from platformdirs import user_config_dir
@@ -124,13 +125,17 @@ elif argv[1] == "apply":
 elif argv[1] == "vars":
     if len(argv) == 2:
         for var in vars:
-            print(f"{var}={vars[var]}")
+            print(f"\x1b[35m{var}\x1b[0m => \n -> \x1b[33m{vars[var]}\x1b[0m")
     else:
         varsctl(argv[2])
 elif argv[1] == "apps":
     if len(argv) == 2:
         for app in apps:
-            print(f"{app}={apps[app]}")
+            print(f"\x1b[35m{app}\x1b[0m =>")
+            print(
+                f"   > Template -> \x1b[33m{expanduser(apps[app]['template'])}\x1b[0m"
+            )
+            print(f"   > Target   -> \x1b[33m{expanduser(apps[app]['target'])}\x1b[0m")
     else:
         appsctl("".join(argv[2:]))
 elif argv[1] == "edit":
