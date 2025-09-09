@@ -8,6 +8,7 @@ packages=(
   "hyprpaper"
   "hypridle"
   "hyprlock"
+  "trash"
   "swayosd"
   "swww"
   "niri"
@@ -38,6 +39,8 @@ packages=(
   "blueman"
   "network-manager-applet"
   "mako"
+  "nodejs"
+  "npm"
   "qbittorrent"
   "jdk-openjdk"
 )
