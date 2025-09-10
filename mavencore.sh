@@ -43,6 +43,7 @@ packages=(
   "npm"
   "qbittorrent"
   "jdk-openjdk"
+  "wine"
 )
 
 rust_packages=(
@@ -54,6 +55,8 @@ rust_packages=(
   "macchina"
   "starship"
   "bat"
+  "dvault"
+  "colorctl"
 )
 
 flatpak_apps=(
@@ -166,5 +169,6 @@ for link in "${links[@]}"; do
 done
 
 echo "=> All links created."
+echo "=> Changing default shell to zsh..."
 chsh -s /bin/zsh
 echo "=== Completed ==="
