@@ -1,4 +1,4 @@
-#! /bin/env python3
+#!/bin/env python3
 states = ["󰁻", "󰁻", "󰁼", "󰁽", "󰁾", "󰁿", "󰂀", "󰂀", "󰂂", "󰁹"]
 power_level = -1
 with open("/sys/class/power_supply/BAT1/capacity") as f:

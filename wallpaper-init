@@ -1,25 +1,27 @@
-#! /bin/bash
-if [[ $1 = "toggle-live" ]]; then
-  if [[ -e /tmp/.wallpaper-live-off ]]; then
-    rm /tmp/.wallpaper-live-off
-    "$0"
+#!/bin/bash
+
+MONITOR="eDP-1"
+LIVE=~/Pictures/CURRENT-LIVE
+FRAME=~/Pictures/CURRENT-LIVE-FF
+FLAG=/tmp/.wallpaper-live-off
+
+if [[ $1 == "toggle-live" ]]; then
+  if [[ -e "$FLAG" ]]; then
+    # Enable live mode
+    rm "$FLAG"
   else
-    touch /tmp/.wallpaper-live-off
-    swww img ~/Pictures/CURRENT-LIVE-FF
+    # Disable live mode
+    touch "$FLAG"
+    ffmpeg -y -i "$LIVE" -frames:v 1 /tmp/CLFF.png &&
+      mv /tmp/CLFF.png "$FRAME"
   fi
+fi
+
+killall mpvpaper
+if [[ -e $FLAG ]]; then
+  nohup mpvpaper -o "--no-audio --loop --scale=nearest" "$MONITOR" "$FRAME" >/dev/null 2>&1 &
+  notify-send "MavenCore" "Live wallpaper disabled"
 else
-
-  if pgrep swww-daemon; then
-    pkill swww-daemon
-    rm ~/Pictures/CURRENT-LIVE-FF
-    sleep 1
-  fi
-  if ! grep ~/Pictures CURRENT-LIVE-FF; then
-    ffmpeg -i ~/Pictures/WallpaperQueue/GreenCat.mp4 -frames:v 1 /tmp/CLFF.png && mv /tmp/CLFF.png ~/Pictures/CURRENT-LIVE-FF
-  fi
-
-  swww-daemon --no-cache &
-  swww img ~/Pictures/CURRENT
-  swww img ~/Pictures/CURRENT-LIVE
-# ifmis => we blit the first frame and wait for the gif to load
+  nohup mpvpaper -o "--no-audio --loop --scale=nearest" "$MONITOR" "$LIVE" >/dev/null 2>&1 &
+  notify-send "MavenCore" "Live wallpaper enabled"
 fi

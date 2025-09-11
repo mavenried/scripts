@@ -44,6 +44,8 @@ packages=(
   "qbittorrent"
   "jdk-openjdk"
   "wine"
+  "dysk"
+  "mpvpaper"
 )
 
 rust_packages=(

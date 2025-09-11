@@ -52,6 +52,9 @@ case $1 in
   purple)
     set Gruvbox-Pink-Dark purple gruvbox_dark d3869b purple
     ;;
+  pink)
+    set Gruvbox-Pink-Dark purple gruvbox_dark b16286 purple
+    ;;
   aqua)
     set Gruvbox-Teal-Dark teal gruvbox_dark 689d6a aqua
     ;;
@@ -82,4 +85,4 @@ case $1 in
   ;;
 esac
 
-~/projects/scripts/restart-waybar-hyprpaper waybar
+/mnt/DATA/scripts/restart-waybar-hyprpaper waybar

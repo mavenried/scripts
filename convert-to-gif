@@ -1,0 +1,30 @@
+#!/bin/bash
+# Better MP4 to GIF converter with palette optimization
+
+if [ -z "$1" ]; then
+  echo "Usage: $0 input.mp4 [output.gif] [fps] [width]"
+  echo "Example: $0 video.mp4 animation.gif 10 320"
+  exit 1
+fi
+
+INPUT="$1"
+OUTPUT="${2:-${INPUT%.mp4}.gif}"
+FPS="${3:-10}"
+WIDTH=1920
+PALETTE="/tmp/palette.png"
+
+echo "Converting $INPUT to $OUTPUT..."
+echo "Settings: FPS=$FPS, Width=$WIDTH"
+
+# 1. Generate optimal palette
+ffmpeg -y -i "$INPUT" -vf "fps=$FPS,scale=$WIDTH:-1:flags=lanczos,palettegen" "$PALETTE"
+
+# 2. Apply palette for high quality
+ffmpeg -i "$INPUT" -i "$PALETTE" -lavfi "fps=$FPS,scale=$WIDTH:-1:flags=lanczos [x]; [x][1:v] paletteuse" -loop 0 "$OUTPUT"
+
+if [ $? -eq 0 ]; then
+  echo "✅ GIF created: $OUTPUT"
+else
+  echo "❌ Conversion failed"
+  exit 1
+fi
