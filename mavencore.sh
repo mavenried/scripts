@@ -46,10 +46,12 @@ packages=(
   "wine"
   "dysk"
   "mpvpaper"
+  "dunst"
 )
 
 rust_packages=(
   "proj-cmd"
+  "lsr-nf "
   "zoxide"
   "zellij"
   "eza"
@@ -70,6 +72,7 @@ flatpak_apps=(
   "info.febvre.Komikku"
   "com.heroicgameslauncher.hgl"
   "com.mattjakeman.ExtensionManager"
+  "org.gnome.Evince"
 )
 
 links=(
