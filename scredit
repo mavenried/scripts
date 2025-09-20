@@ -1,0 +1,8 @@
+#!/bin/sh
+
+cd /mnt/DATA/scripts/
+for i in $@; do 
+  nvim $1
+done
+
+chmod +x /mnt/DATA/scripts/*

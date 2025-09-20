@@ -4,6 +4,7 @@
 # List of packages to install
 packages=(
   "hyprland"
+  "rsync"
   "hyprshot"
   "hyprpaper"
   "hypridle"
@@ -72,7 +73,7 @@ flatpak_apps=(
   "info.febvre.Komikku"
   "com.heroicgameslauncher.hgl"
   "com.mattjakeman.ExtensionManager"
-  "org.gnome.Evince"
+  "org.gnome.Papers"
 )
 
 links=(

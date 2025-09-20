@@ -18,9 +18,8 @@ set() {
 
   echo "Applying colorctl..."
   colorctl apply
-
   cat ~/.config/niri/pieces/* >~/.config/niri/config.kdl
-
+  sudo flatpak override --env=GTK_THEME=$1
 }
 case $1 in
 "cpcn")

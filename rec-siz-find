@@ -1,3 +1,2 @@
 #! /bin/bash
-for file in *; do echo "$file: $(du $file -hc|grep total)"; done
-
+for file in *; do echo "$file: $(du $file -hc | grep total)"; done

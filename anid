@@ -1,2 +1,4 @@
-#! /bin/zsh 
-echo '\x1b[31mUninplemented!\x1b[0m'
+#! /bin/zsh
+echo "Initiating download for \"$@\"."
+systemd-inhibit ani -d "$@" -r 1-100
+
