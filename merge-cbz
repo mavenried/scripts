@@ -1,0 +1,35 @@
+#!/bin/bash
+# merge_cbz.sh — Merge multiple CBZ files into one continuous CBZ safely
+
+if [ $# -eq 0 ]; then
+  echo "Usage: $0 *.cbz"
+  exit 1
+fi
+
+output="complete.cbz"
+mkdir -p merged
+chapter=1
+
+for f in "$@"; do
+  echo "Processing $f ..."
+  mkdir -p "tmp_$chapter"
+  unzip -q "$f" -d "tmp_$chapter"
+
+  page=1
+  shopt -s nullglob
+  for img in "tmp_$chapter"/*.{jpg,jpeg,png,JPG,JPEG,PNG}; do
+    cp "$img" "merged/$(printf '%04d' $chapter)_$(printf '%04d' $page).${img##*.}"
+    ((page++))
+  done
+  shopt -u nullglob
+
+  rm -rf "tmp_$chapter"
+  ((chapter++))
+done
+
+cd merged
+zip -q -r "../$output" .
+cd ..
+rm -rf merged
+
+echo "Done! Merged CBZ created: $output"

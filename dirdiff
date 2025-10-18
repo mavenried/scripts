@@ -1,0 +1,55 @@
+#!/usr/bin/env lua
+
+-- Recursively list all files in a directory
+local function collect_files(dir, base)
+  local files = {}
+  local p = io.popen('find "' .. dir .. '" -type f')
+  if not p then return files end
+  for path in p:lines() do
+    local rel = path:sub(#dir + 2)
+    files[rel] = path
+  end
+  p:close()
+  return files
+end
+
+-- Simple hash function (FNV-1a) to detect content differences
+local function file_hash(path)
+  local f = io.open(path, "rb")
+  if not f then return nil end
+  local data = f:read("*a")
+  f:close()
+  local hash = 2166136261
+  for i = 1, #data do
+    hash = (hash ~ data:byte(i)) * 16777619 % 2^32
+  end
+  return hash
+end
+
+local dir1, dir2 = ...
+if not dir1 or not dir2 then
+  print("Usage: lua diffdirs.lua <dir1> <dir2>")
+  os.exit(1)
+end
+
+local files1 = collect_files(dir1)
+local files2 = collect_files(dir2)
+
+-- Compare both
+for rel, path1 in pairs(files1) do
+  local path2 = files2[rel]
+  if not path2 then
+    print("Only in " .. dir1 .. ": " .. rel)
+  else
+    local h1, h2 = file_hash(path1), file_hash(path2)
+    if h1 ~= h2 then
+      print("Different content: " .. rel)
+    end
+    files2[rel] = nil
+  end
+end
+
+for rel, _ in pairs(files2) do
+  print("Only in " .. dir2 .. ": " .. rel)
+end
+
