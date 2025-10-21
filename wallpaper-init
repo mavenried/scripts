@@ -1,27 +1,48 @@
 #!/bin/bash
 
 MONITOR="eDP-1"
-LIVE=~/Pictures/CURRENT-LIVE
-FRAME=~/Pictures/CURRENT-LIVE-FF
+LIVE=/mnt/DATA/Pictures/CURRENT-LIVE
+FRAME=/mnt/DATA/Pictures/CURRENT-LIVE-FF
+STATIC=/mnt/DATA/Pictures/CURRENT
 FLAG=/tmp/.wallpaper-live-off
+MODE=/mnt/DATA/Pictures/.wallpaper-mode-static
 
-if [[ $1 == "toggle-live" ]]; then
-  if [[ -e "$FLAG" ]]; then
-    # Enable live mode
-    rm "$FLAG"
-  else
-    # Disable live mode
-    touch "$FLAG"
-    ffmpeg -y -i "$LIVE" -frames:v 1 /tmp/CLFF.png &&
-      mv /tmp/CLFF.png "$FRAME"
-  fi
-fi
+restart_mpvpaper_with() {
+ nohup mpvpaper -o "--no-audio --loop --scale=nearest" "$MONITOR" "$1" >/dev/null 2>&1 &
+}
+case $1 in 
+  toggle-live)
+    if [[ -e "$FLAG" ]]; then
+      rm "$FLAG"
+    else
+      touch "$FLAG"
+      ffmpeg -y -i "$LIVE" -frames:v 1 /tmp/CLFF.png &&
+        mv /tmp/CLFF.png "$FRAME"
+    fi
+    ;;
+  toggle-static)
+    if [[ -e "$MODE" ]]; then
+      rm "$MODE"
+    else
+      touch "$MODE"
+    fi
+    ;;
+esac
+  
+
+if [[ -e "$MODE" ]]; then
+killall mpvpaper
+restart_mpvpaper_with $STATIC
+notify-send "MavenCore" "Static wallpaper updated"
+
+else
 
 killall mpvpaper
 if [[ -e $FLAG ]]; then
-  nohup mpvpaper -o "--no-audio --loop --scale=nearest" "$MONITOR" "$FRAME" >/dev/null 2>&1 &
+  restart_mpvpaper_with $FRAME
   notify-send "MavenCore" "Live wallpaper disabled"
 else
-  nohup mpvpaper -o "--no-audio --loop --scale=nearest" "$MONITOR" "$LIVE" >/dev/null 2>&1 &
+  restart_mpvpaper_with $LIVE
   notify-send "MavenCore" "Live wallpaper enabled"
+fi
 fi

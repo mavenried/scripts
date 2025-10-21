@@ -1,0 +1,7 @@
+font-family = JetbrainsMono Nerd Font
+theme = $[ghostty_theme]
+window-decoration = none
+background-opacity = 0.8
+font-size = 15 
+background-blur = false
+
