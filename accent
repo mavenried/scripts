@@ -1,7 +1,7 @@
 # /bin/bash
 
 set_theme() {
-  echo "set_themeting Themes..."
+  echo "Setting Themes..."
   gsettings set org.gnome.desktop.interface gtk-theme "$1"
   gsettings set org.gnome.desktop.interface accent-color "$2"
   gsettings set org.gnome.desktop.interface icon-theme "$3"
@@ -12,9 +12,10 @@ set_theme() {
   ln ~/.themes/"$1"/gtk-4.0/gtk-dark.css ~/.config/gtk-4.0/gtk-dark.css -sf
 
   echo "Updating colorctl..."
-  colorctl vars +accent-color=\#"$4"
-  colorctl vars +accent-color-clean="$4"
+  colorctl vars +accent-color="$4"
   colorctl vars +waybar-color="$5"
+  colorctl vars +icon-theme="$3"
+  colorctl vars +gtk-theme="$1"
 
   echo "Applying colorctl..."
   colorctl apply
@@ -24,14 +25,14 @@ set_theme() {
 
 case $1 in
 cpcn)
-  colorctl vars +inactive-color=181824
+  colorctl vars +bg-color=181824
   colorctl vars +hyprlock-hour-color=94e2d5
   colorctl vars +hyprlock-minutes-color=cba6f7
   colorctl vars +hyprlock-battery-color=94e2d5
   colorctl vars +hyprlock-uptime-color=b8bb26
-  colorctl vars +hyprlock-text-color=cdd6f4
-  colorctl vars +hyprlock-textbg-color=11111b
-  colorctl vars "+hyprlock-bg-color=rgba(24,24,37,0.8)"
+  colorctl vars +text-color=cdd6f4
+  colorctl vars +dark-bg-color=11111b
+  colorctl vars +bg-color=181825
   colorctl vars +ghostty_theme=CatppuccinMocha
 
   ln ~/.config/waybar/colors/catppuccin-mocha.css ~/.config/waybar/colors.css -sf
@@ -40,7 +41,7 @@ cpcn)
     set_theme Catppuccin-Teal-Dark teal Adwaita-Teal 94e2d5 teal
     ;;
   purple)
-    set_theme Catppuccin-Purple-Dark purple Adwaita-Purple cba6f7 mauve
+    set_theme Catppuccin-Purple-Dark purple Cpcn-Purple cba6f7 mauve
     ;;
   red)
     set_theme Catppuccin-Red-Dark red Adwaita-Red f38ba8 red

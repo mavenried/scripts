@@ -1,6 +1,6 @@
-background-color=#282828
-text-color=#ebdbb2
-border-color=$[accent-color]
+background-color=$[bg-color]
+text-color=$[text-color]
+border-color=#$[accent-color]
 border-radius=10
 anchor=bottom-right
 margin=5

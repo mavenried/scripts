@@ -53,9 +53,9 @@
     mouse_middle_click = do_action, close_current
     mouse_right_click = close_all
 
-    background = "#$[inactive-color]"
-    foreground = "#$[hyprlock-text-color]"
-    frame_color = "$[accent-color]"
+    background = "#$[bg-color]"
+    foreground = "#$[text-color]"
+    frame_color = "#$[accent-color]"
     timeout = 5
 
 [experimental]

@@ -20,14 +20,14 @@ layout {
     focus-ring {
         off
         width 1.5
-        active-color "$[accent-color]"
-        inactive-color "$[inactive-color]"
+        active-color "#$[accent-color]"
+        inactive-color "#$[bg-color]"
     }
     border {
         width 1.5
-        active-color "$[accent-color]"
-        inactive-color "$[inactive-color]"
-        urgent-color "#9b0000"
+        active-color "#$[accent-color]"
+        inactive-color "#$[bg-color]"
+        urgent-color "#$[accent-color]"
     }
     shadow {
         on
