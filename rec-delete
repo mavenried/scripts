@@ -1,0 +1,9 @@
+#! /bin/zsh
+for i in * .*
+do
+  echo $i
+  if gum confirm; then
+    echo Deleting
+    rm -rf $i
+  fi
+done
