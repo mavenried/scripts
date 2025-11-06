@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # This script installs a list of software packages for setting up my computer.
-#
+
 # List of packages to install
 packages=(
     "bat"
@@ -14,12 +14,14 @@ packages=(
     "dysk"
     "eza"
     "fzf"
+    "fprintd"
     "gcc"
     "getnf"
     "ghostty"
     "git"
     "github-cli"
     "grim"
+    "gum"
     "hypridle"
     "hyprland"
     "hyprlock"
@@ -27,6 +29,8 @@ packages=(
     "hyprshot"
     "jdk-openjdk"
     "kitty"
+    "libfprint"
+    "libfprint-2-tod1-goodix"
     "macchina"
     "mako"
     "mpvpaper"
@@ -50,6 +54,7 @@ packages=(
     "waybar"
     "wine"
     "wl-clipboard"
+    "xwayland-satellite"
     "zellij"
     "zip"
     "zoxide"
@@ -62,7 +67,7 @@ packages=(
 rust_packages=(
     "colorctl"
     "dvault"
-    "lsr-nf "
+    'lsr-nf'
     "musicman"
     "proj-cmd"
 )
