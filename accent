@@ -1,111 +1,136 @@
-# /bin/bash
+#! /bin/sh
 
 set_theme() {
-  echo "Setting Themes..."
-  gsettings set org.gnome.desktop.interface gtk-theme "$1"
-  gsettings set org.gnome.desktop.interface accent-color "$2"
-  gsettings set org.gnome.desktop.interface icon-theme "$3"
+    echo "Setting Themes..."
+    gsettings set org.gnome.desktop.interface gtk-theme "$1"
+    gsettings set org.gnome.desktop.interface accent-color "$2"
+    gsettings set org.gnome.desktop.interface icon-theme "$3"
 
-  echo "Linking Files..."
-  ln ~/.themes/"$1"/gtk-4.0/asset_themes ~/.config/gtk-4.0/assets -sf
-  ln ~/.themes/"$1"/gtk-4.0/gtk.css ~/.config/gtk-4.0/gtk.css -sf
-  ln ~/.themes/"$1"/gtk-4.0/gtk-dark.css ~/.config/gtk-4.0/gtk-dark.css -sf
+    echo "Linking Files..."
+    ln ~/.themes/"$1"/gtk-4.0/asset_themes ~/.config/gtk-4.0/assets -sf
+    ln ~/.themes/"$1"/gtk-4.0/gtk.css ~/.config/gtk-4.0/gtk.css -sf
+    ln ~/.themes/"$1"/gtk-4.0/gtk-dark.css ~/.config/gtk-4.0/gtk-dark.css -sf
 
-  echo "Updating colorctl..."
-  colorctl vars +accent-color="$4"
-  colorctl vars +waybar-color="$5"
-  colorctl vars +icon-theme="$3"
-  colorctl vars +gtk-theme="$1"
+    echo "Updating colorctl..."
+    colorctl vars +accent-color="$4"
+    colorctl vars +waybar-color="$5"
+    colorctl vars +icon-theme="$3"
+    colorctl vars +gtk-theme="$1"
 
-  echo "Applying colorctl..."
-  colorctl apply
-  cat ~/.config/niri/pieces/* >~/.config/niri/config.kdl
-  sudo flatpak override --env=GTK_THEME=$1
+    echo "Applying colorctl..."
+    colorctl apply
+    cat ~/.config/niri/pieces/* >~/.config/niri/config.kdl
+    sudo flatpak override --env=GTK_THEME=$1
 }
 
 case $1 in
-cpcn)
-  colorctl vars +bg-color=181824
-  colorctl vars +hyprlock-hour-color=94e2d5
-  colorctl vars +hyprlock-minutes-color=cba6f7
-  colorctl vars +hyprlock-battery-color=94e2d5
-  colorctl vars +hyprlock-uptime-color=b8bb26
-  colorctl vars +text-color=cdd6f4
-  colorctl vars +dark-bg-color=11111b
-  colorctl vars +bg-color=181825
-  colorctl vars +ghostty_theme=CatppuccinMocha
+    cpcn)
+        colorctl vars +bg-color=181824
+        colorctl vars +hyprlock-hour-color=94e2d5
+        colorctl vars +hyprlock-minutes-color=cba6f7
+        colorctl vars +hyprlock-battery-color=94e2d5
+        colorctl vars +hyprlock-uptime-color=b8bb26
+        colorctl vars +text-color=cdd6f4
+        colorctl vars +dark-bg-color=11111b
+        colorctl vars +bg-color=181825
+        colorctl vars +ghostty_theme=CatppuccinMocha
 
-  ln ~/.config/waybar/colors/catppuccin-mocha.css ~/.config/waybar/colors.css -sf
-  case $2 in
-  teal)
-    set_theme Catppuccin-Teal-Dark teal Adwaita-Teal 94e2d5 teal
-    ;;
-  purple)
-    set_theme Catppuccin-Purple-Dark purple Cpcn-Purple cba6f7 mauve
-    ;;
-  red)
-    set_theme Catppuccin-Red-Dark red Adwaita-Red f38ba8 red
-    ;;
-  green)
-    set_theme Catppuccin-Green-Dark green Adwaita-Green a6e3a1 green
-    ;;
-  orange)
-    set_theme Catppuccin-Orange-Dark orange Adwaita-Orange fab387 peach
-    ;;
-  *)
-    echo "Not a valid vairant"
-    ;;
-  esac
-  ;;
-gruv)
-  ln ~/.config/waybar/colors/gruvbox.css ~/.config/waybar/colors.css -sf
-  case $2 in
-  purple)
-    set_theme Gruvbox-Pink-Dark purple gruvbox_dark d3869b purple
-    ;;
-  pink)
-    set_theme Gruvbox-Pink-Dark purple gruvbox_dark b16286 purple
-    ;;
-  aqua)
-    set_theme Gruvbox-Teal-Dark teal gruvbox_dark 689d6a aqua
-    ;;
-  orange)
-    set_theme Gruvbox-Orange-Dark orange gruvbox_dark fe8019 orange
-    ;;
-  green)
-    set_theme Gruvbox-Green-Dark green gruvbox_dark b8bb26 green
-    ;;
-  blue)
-    set_theme Gruvbox-Dark blue gruvbox_dark 458588 blue
-    ;;
-  red)
-    set_theme Gruvbox-Red-Dark red gruvbox_dark cc241d red
-    ;;
-  yellow)
-    set_theme Gruvbox-Yellow-Dark yellow gruvbox_dark d79921 yellow
-    ;;
-  *)
-    echo "Not a valid vairant"
-    ;;
-  esac
-  ;;
-gkpr)
-  ln ~/.config/waybar/colors/gatekeeper.css ~/.config/waybar/colors.css -sf
-  case $2 in
-   white)
-    set_theme GateKeeper fg GateKeeper cccdd1 fg
-   ;;
-   *)
-    echo "Not a valid vairant"
-    exit 1
-   ;;
-  esac
-  ;;
-  
-*)
-  echo "Usage: accent {cpcn|gruv}"
-  exit 1
-  ;;
+        ln ~/.config/waybar/colors/catppuccin-mocha.css ~/.config/waybar/colors.css -sf
+        case $2 in
+            teal)
+                set_theme Catppuccin-Teal-Dark teal Adwaita-Teal 94e2d5 teal
+                ;;
+            purple)
+                set_theme Catppuccin-Purple-Dark purple Cpcn-Purple cba6f7 mauve
+                ;;
+            red)
+                set_theme Catppuccin-Red-Dark red Adwaita-Red f38ba8 red
+                ;;
+            green)
+                set_theme Catppuccin-Green-Dark green Adwaita-Green a6e3a1 green
+                ;;
+            orange)
+                set_theme Catppuccin-Orange-Dark orange Adwaita-Orange fab387 peach
+                ;;
+            *)
+                echo "Not a valid vairant"
+                ;;
+        esac
+        ;;
+    gruv)
+        colorctl vars +bg-color=282828
+        colorctl vars +hyprlock-hour-color=94e2d5
+        colorctl vars +hyprlock-minutes-color=cba6f7
+        colorctl vars +hyprlock-battery-color=94e2d5
+        colorctl vars +hyprlock-uptime-color=b8bb26
+        colorctl vars +text-color=ebdbb2
+        colorctl vars +dark-bg-color=181818
+        colorctl vars +bg-color=181818
+        colorctl vars +ghostty_theme=GruvboxDark
+
+
+        ln ~/.config/waybar/colors/gruvbox.css ~/.config/waybar/colors.css -sf
+        case $2 in
+            purple)
+                set_theme Gruvbox-Pink-Dark purple gruvbox_dark d3869b purple
+                ;;
+            pink)
+                set_theme Gruvbox-Pink-Dark purple gruvbox_dark b16286 purple
+                ;;
+            aqua)
+                set_theme Gruvbox-Teal-Dark teal gruvbox_dark 689d6a aqua
+                ;;
+            orange)
+                set_theme Gruvbox-Orange-Dark orange gruvbox_dark fe8019 orange
+                ;;
+            green)
+                set_theme Gruvbox-Green-Dark green gruvbox_dark b8bb26 green
+                ;;
+            blue)
+                set_theme Gruvbox-Dark blue gruvbox_dark 458588 blue
+                ;;
+            red)
+                set_theme Gruvbox-Red-Dark red gruvbox_dark cc241d red
+                ;;
+            yellow)
+                set_theme Gruvbox-Yellow-Dark yellow gruvbox_dark d79921 yellow
+                ;;
+            *)
+                echo "Not a valid vairant"
+                ;;
+        esac
+        ;;
+    gkpr)
+        ln ~/.config/waybar/colors/gatekeeper.css ~/.config/waybar/colors.css -sf
+
+        colorctl vars +hyprlock-hour-color=ffb20f
+        colorctl vars +hyprlock-minutes-color=29adff
+        colorctl vars +hyprlock-battery-color=be620a
+        colorctl vars +hyprlock-uptime-color=988bb1
+        colorctl vars +text-color=cccdd1
+        colorctl vars +dark-bg-color=050505
+        colorctl vars +bg-color=101010
+        colorctl vars +ghostty_theme=GateKeeper
+
+
+        case $2 in
+            white)
+                set_theme GateKeeper fg GateKeeper cccdd1 fg
+                ;;
+            red)
+                set_theme Nightfox-Red-Dark-Carbonfox red GateKeeper ff004d red
+                ;;
+            *)
+                echo "Not a valid vairant"
+                exit 1
+                ;;
+        esac
+        ;;
+
+    *)
+        echo "Usage: accent {cpcn|gruv|gkpr}"
+        exit 1
+        ;;
 esac
 
 /mnt/DATA/scripts/restart-waybar-hyprpaper waybar
