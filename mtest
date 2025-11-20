@@ -1,0 +1,36 @@
+#!/usr/bin/env bash
+
+BASE="http://localhost:4400"
+
+# If no arguments, fetch root
+if [ $# -eq 0 ]; then
+  curl -s "$BASE/" | jq
+  exit
+fi
+
+CMD="$1"
+ARG="$2"
+
+case "$CMD" in
+albumart)
+  curl -s "$BASE/$CMD${ARG:+/$ARG}" | kitten icat
+  ;;
+playlist)
+  if [ "$ARG" == "create" ]; then
+    curl -s -X POST "$BASE/playlist/create" -d @data.json | jq
+  elif [ -n "$ARG" ]; then
+    curl -s "$BASE/playlist/$ARG" | jq
+  else
+    curl -s "$BASE/playlist" | jq
+  fi
+  ;;
+next | prev | add)
+  curl -s -X POST "$BASE/$CMD/$ARG" | jq
+  ;;
+pause | clear)
+  curl -s -X POST "$BASE/$CMD" | jq
+  ;;
+*)
+  curl -s "$BASE/$CMD${ARG:+/$ARG}" | jq
+  ;;
+esac
