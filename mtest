@@ -10,6 +10,7 @@ fi
 
 CMD="$1"
 ARG="$2"
+ARG2="$3"
 
 case "$CMD" in
 albumart)
@@ -18,10 +19,10 @@ albumart)
 playlist)
   if [ "$ARG" == "create" ]; then
     curl -s -X POST "$BASE/playlist/create" -d @data.json | jq
-  elif [ -n "$ARG" ]; then
-    curl -s "$BASE/playlist/$ARG" | jq
-  else
-    curl -s "$BASE/playlist" | jq
+  elif [ "$ARG" == "load" ]; then
+    curl -s "$BASE/playlist/load/$ARG2" | jq
+  elif [ "$ARG" == "list" ]; then
+    curl -s "$BASE/playlist/list" | jq
   fi
   ;;
 next | prev | add)
@@ -29,6 +30,9 @@ next | prev | add)
   ;;
 pause | clear)
   curl -s -X POST "$BASE/$CMD" | jq
+  ;;
+search)
+  curl -s "$BASE/$CMD/$ARG/$ARG2" | jq
   ;;
 *)
   curl -s "$BASE/$CMD${ARG:+/$ARG}" | jq

@@ -3,14 +3,14 @@
 case "$1" in
 prev)
   playerctl previous
-  notify-send "Player Control" "Previous" -i ~/Pictures/AVATAR -u low
+  notify-send "MavenCore" "Previous" -i ~/Pictures/AVATAR -u low
   ;;
 next)
   playerctl next
-  notify-send "Player Control" "Next" -i ~/Pictures/AVATAR -u low
+  notify-send "MavenCore" "Next" -i ~/Pictures/AVATAR -u low
   ;;
 toggle)
   playerctl play-pause
-  notify-send "Player Control" "Toggled play/pause state" -i ~/Pictures/AVATAR -u low
+  notify-send "MavenCore" "Toggled play/pause state" -i ~/Pictures/AVATAR -u low
   ;;
 esac

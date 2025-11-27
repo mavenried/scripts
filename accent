@@ -61,10 +61,10 @@ cpcn)
   ;;
 gruv)
   colorctl vars +starship-palette=gruvbox
-  colorctl vars +hyprlock-hour-color=94e2d5
-  colorctl vars +hyprlock-minutes-color=cba6f7
-  colorctl vars +hyprlock-battery-color=94e2d5
-  colorctl vars +hyprlock-uptime-color=b8bb26
+  colorctl vars +hyprlock-hour-color=689d6a
+  colorctl vars +hyprlock-minutes-color=d3869b
+  colorctl vars +hyprlock-battery-color=689d6a
+  colorctl vars +hyprlock-uptime-color=438488
   colorctl vars +text-color=ebdbb2
   colorctl vars +dark-bg-color=181818
   colorctl vars +bg-color=282828

@@ -1,0 +1,45 @@
+#!/bin/env python3
+import sys
+import asyncio
+
+HOST = "0.0.0.0"
+PORT = sys.argv[1]
+FILE = sys.argv[2]
+
+
+async def send_frame(writer, payload: bytes):
+    # 4-byte big-endian length prefix
+    prefix = len(payload).to_bytes(4, "big")
+    writer.write(prefix + payload)
+    await writer.drain()
+
+
+async def main():
+    print(f"Connecting to {HOST}:{PORT}...")
+    reader, writer = await asyncio.open_connection(HOST, PORT)
+    print("Connected.")
+
+    # initial message
+    payload = open(FILE).read().encode()
+    await send_frame(writer, payload)
+    print("Sent:", payload)
+
+    try:
+        while True:
+            data = await reader.read(4096)
+            if not data:
+                print("Server closed connection.")
+                break
+
+            print("Received:", data)
+    finally:
+        writer.close()
+        await writer.wait_closed()
+
+
+try:
+    asyncio.run(main())
+except KeyboardInterrupt:
+    print("\nShutting Down")
+    exit(0)
+

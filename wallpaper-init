@@ -8,49 +8,46 @@ FLAG=/tmp/.wallpaper-live-off
 MODE=/mnt/DATA/Pictures/.wallpaper-mode-static
 
 function restart_mpvpaper_with() {
-    nohup mpvpaper -o "--no-audio --loop --scale=nearest" "$MONITOR" "$1" >/dev/null 2>&1 &
+  nohup mpvpaper -o "--no-audio --loop --scale=nearest --cscale=nearest" "$MONITOR" "$1" >/dev/null 2>&1 &
 }
 case $1 in
-    toggle-live)
-        if [[ -e "$FLAG" ]]; then
-            rm "$FLAG"
-        else
-            touch "$FLAG"
-            ffmpeg -y -i "$LIVE" -frames:v 1 /tmp/CLFF.png &&
-            mv /tmp/CLFF.png "$FRAME"
-        fi
-        ;;
-    toggle-static)
-        if [[ -e "$MODE" ]]; then
-            rm "$MODE"
-        else
-            touch "$MODE"
-        fi
-        ;;
+toggle-live)
+  if [[ -e "$FLAG" ]]; then
+    rm "$FLAG"
+  else
+    touch "$FLAG"
+    ffmpeg -y -i "$LIVE" -frames:v 1 /tmp/CLFF.png &&
+      mv /tmp/CLFF.png "$FRAME"
+  fi
+  ;;
+toggle-static)
+  if [[ -e "$MODE" ]]; then
+    rm "$MODE"
+  else
+    touch "$MODE"
+  fi
+  ;;
 esac
 
-
 if [[ -e "$MODE" ]]; then
-    killall mpvpaper
-    restart_mpvpaper_with $STATIC
-    CURRENT=$STATIC
-    notify-send "MavenCore" "Static wallpaper updated."
+  killall mpvpaper
+  restart_mpvpaper_with $STATIC
+  CURRENT=$STATIC
+  notify-send "MavenCore" "Static wallpaper updated."
 
 else
 
-    killall mpvpaper
-    CURRENT=$FRAME
-    if [[ -e $FLAG ]]; then
-        restart_mpvpaper_with $FRAME
-        notify-send "MavenCore" "Live wallpaper disabled."
-    else
-        restart_mpvpaper_with $LIVE
-        notify-send "MavenCore" "Live wallpaper enabled."
-    fi
+  killall mpvpaper
+  CURRENT=$FRAME
+  if [[ -e $FLAG ]]; then
+    restart_mpvpaper_with $FRAME
+    notify-send "MavenCore" "Live wallpaper disabled."
+  else
+    restart_mpvpaper_with $LIVE
+    notify-send "MavenCore" "Live wallpaper enabled."
+  fi
 fi
 
 magick $CURRENT -scale 20% -blur 0x2.5 -scale 500% -colorize 50% -fill black ~/Pictures/C
 mv ~/Pictures/C ~/Pictures/CURRENT_BLUR
 notify-send "MavenCore" "Finished Blurring."
-
-

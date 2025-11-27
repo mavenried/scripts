@@ -1,0 +1,9 @@
+#!/bin/sh
+clear
+while true; do
+  mtest | jq '.Status.current_song.id' | xargs mtest albumart
+  mtest | jq '.Status.current_song.title'
+  mtest | jq '.Status.current_song.artists'
+  sleep 5
+  clear
+done
