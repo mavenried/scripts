@@ -6,7 +6,6 @@
 packages=(
   "bat"
   "blueman"
-  "brave-bin"
   "clang"
   "cloudflared"
   "cmake"
@@ -57,6 +56,7 @@ packages=(
   "wl-clipboard"
   "xwayland-satellite"
   "zellij"
+  "zen-browser"
   "zip"
   "zoxide"
   "zsh"
