@@ -24,6 +24,7 @@ layout {
         inactive-color "#$[bg-color]"
     }
     border {
+        on
         width 1.5
         active-color "#$[accent-color]"
         inactive-color "#$[bg-color]"

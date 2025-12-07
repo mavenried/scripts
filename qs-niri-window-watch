@@ -1,0 +1,76 @@
+#!/usr/bin/env python3
+import asyncio
+import json
+import os
+import glob
+
+base = os.environ["XDG_RUNTIME_DIR"]
+candidates = glob.glob(f"{base}/niri.wayland-*.sock")
+
+if not candidates:
+    raise RuntimeError("Niri IPC socket not found")
+
+SOCK = sorted(candidates)[-1]
+
+
+async def main():
+    reader, writer = await asyncio.open_unix_connection(SOCK)
+
+    writer.write(json.dumps({"EventStream": None}).encode() + b"\n")
+    await writer.drain()
+
+    windows = {}
+    # workspaces = []
+
+    while True:
+        line = await reader.readline()
+
+        if not line:
+            break
+
+        try:
+            event = json.loads(line.decode())
+        except:
+            continue
+
+        if "WindowsChanged" in event:
+            windows = dict(((win['id'], win['app_id']) for win in event["WindowsChanged"]["windows"]))
+            [print(win['app_id'].split(".")[-1].lower(), flush=True) for win in  event["WindowsChanged"]["windows"] if win['is_focused']]
+
+        '''
+        if "WorkspacesChanged" in event:
+            workspaces = sorted([ws['id'] for ws in event["WorkspacesChanged"]['workspaces']])
+        '''
+
+        if "WindowFocusChanged" in event:
+            win_id = event["WindowFocusChanged"]['id']
+
+            if win_id is None:
+                name = "----"
+            else: 
+                name = windows[int(win_id)].split(".")[-1].lower()
+
+            # print(f"t: {name}")
+            print(name, flush=True)
+        '''
+        if "WorkspaceActivated" in event:
+            ws_id = int(event["WorkspaceActivated"]['id'])
+            print(f"w: {workspaces.index(ws_id)+1}")
+        '''
+        if "WindowOpenedOrChanged" in event:
+            win_id = event["WindowFocusChanged"]['id']
+            win_app_id = event["WindowFocusChanged"]['app_id']
+
+            windows[int(win_id)] = win_app_id
+            name = windows[int(win_id)].split(".")[-1].lower()
+
+            # print(f"t: {name}")
+            print(name, flush=True)
+
+
+
+if __name__ == "__main__":
+    try:
+        asyncio.run(main())
+    except KeyboardInterrupt:
+        pass

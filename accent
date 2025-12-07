@@ -19,7 +19,6 @@ set_theme() {
 
   echo "Applying colorctl..."
   colorctl apply
-  cat ~/.config/niri/pieces/* >~/.config/niri/config.kdl
   sudo flatpak override --env=GTK_THEME=$1
 }
 
@@ -30,7 +29,7 @@ cpcn)
   colorctl vars +hyprlock-hour-color=94e2d5
   colorctl vars +hyprlock-minutes-color=cba6f7
   colorctl vars +hyprlock-battery-color=94e2d5
-  colorctl vars +hyprlock-uptime-color=b8bb26
+  colorctl vars +hyprlock-uptime-color=89b1d1
   colorctl vars +text-color=cdd6f4
   colorctl vars +dark-bg-color=11111b
   colorctl vars +bg-color=181825
@@ -38,6 +37,7 @@ cpcn)
 
   ln /mnt/DATA/Pictures/Wallpapers/cpcn.jpg /mnt/DATA/Pictures/CURRENT -sf
   ln ~/.config/waybar/colors/catppuccin-mocha.css ~/.config/waybar/colors.css -sf
+  ln ~/.config/quickshell/themes/CatppuccinMocha.qml ~/.config/quickshell/Theme.qml -sf
   case $2 in
   teal)
     set_theme Catppuccin-Teal-Dark teal Adwaita-Teal 94e2d5 teal
@@ -72,6 +72,7 @@ gruv)
 
   ln /mnt/DATA/Pictures/Wallpapers/gruv.png /mnt/DATA/Pictures/CURRENT -sf
   ln ~/.config/waybar/colors/gruvbox.css ~/.config/waybar/colors.css -sf
+  ln ~/.config/quickshell/themes/GruvboxDark.qml ~/.config/quickshell/Theme.qml -sf
   case $2 in
   purple)
     set_theme Gruvbox-Pink-Dark purple gruvbox_dark d3869b purple
@@ -102,38 +103,11 @@ gruv)
     ;;
   esac
   ;;
-gkpr)
-
-  ln /mnt/DATA/Pictures/Wallpapers/gkpr.jpg /mnt/DATA/Pictures/CURRENT -sf
-  ln ~/.config/waybar/colors/gatekeeper.css ~/.config/waybar/colors.css -sf
-
-  colorctl vars +hyprlock-hour-color=ffb20f
-  colorctl vars +starship-palette=gatekeeper
-  colorctl vars +hyprlock-minutes-color=29adff
-  colorctl vars +hyprlock-battery-color=be620a
-  colorctl vars +hyprlock-uptime-color=988bb1
-  colorctl vars +text-color=cccdd1
-  colorctl vars +dark-bg-color=050505
-  colorctl vars +bg-color=101010
-  colorctl vars +ghostty_theme=GateKeeper
-
-  case $2 in
-  white)
-    set_theme GateKeeper fg GateKeeper cccdd1 fg
-    ;;
-  red)
-    set_theme Nightfox-Red-Dark-Carbonfox red GateKeeper ff004d red
-    ;;
-  *)
-    echo "Not a valid vairant"
-    exit 1
-    ;;
-  esac
-  ;;
 
 neon)
   ln /mnt/DATA/Pictures/Wallpapers/neon.png /mnt/DATA/Pictures/CURRENT -sf
   ln ~/.config/waybar/colors/neon.css ~/.config/waybar/colors.css -sf
+  ln ~/.config/quickshell/themes/GruvboxDark.qml ~/.config/quickshell/Theme.qml -sf
 
   colorctl vars +hyprlock-hour-color=ffffff
   colorctl vars +starship-palette=hyperneon
@@ -148,10 +122,10 @@ neon)
   set_theme Neon blue neon 00ffff cyan
   ;;
 *)
-  echo "Usage: accent {cpcn|gruv|gkpr|neon}"
+  echo "Usage: accent {cpcn|gruv|neon}"
   exit 1
   ;;
 esac
 
-/mnt/DATA/scripts/restart-waybar-hyprpaper waybar
+# /mnt/DATA/scripts/restart-waybar-hyprpaper waybar
 /mnt/DATA/scripts/wallpaper-init

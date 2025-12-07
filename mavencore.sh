@@ -41,6 +41,7 @@ packages=(
   "pamixer"
   "pavucontrol"
   "perl"
+  "python-psutil"
   "polkit-gnome"
   "qbittorrent"
   "rofi-wayland"
@@ -49,7 +50,7 @@ packages=(
   "starship"
   "swayosd"
   "swww"
-  "trash"
+  "trash-cli"
   "unzip"
   "waybar"
   "wine"
@@ -167,9 +168,9 @@ done
 echo "=> Creating symbolic links..."
 
 for item in "${removeonly[@]}"; do
-  if [ -e "$HOME/$item" ] || [ -L "$HOME/$item" ]; then
-    if gum confirm --prompt " -> $item exists remove?"; then
-      rm -ri "${HOME:?}/$item" || printf "\x1b[31mCould not remove %s, exiting\n\x1b[0m" "$item"
+  if [ -e "$HOME/$item" ]; then
+    if gum confirm " -> $item exists remove?"; then
+      rm -r "${HOME:?}/$item" || printf "\x1b[31mCould not remove %s, exiting\n\x1b[0m" "$item"
     fi
   fi
 done
@@ -177,12 +178,13 @@ done
 for link in "${links[@]}"; do
   echo " -> checking $link"
   if [ -e "$HOME/$link" ] || [ -L "$HOME/$link" ]; then
-    echo " -> $link exists removing..."
-    rm -ri "${HOME:?}/$link" || printf "\x1b[31mCould not remove %s, exiting\n\x1b[0m" "$link"
+    echo " -> $link exists, backing up..."
+    mv "${HOME:?}/$link"{,.bak} || printf "\x1b[31mCould not backup %s, exiting\n\x1b[0m" "$link"
   fi
   echo " -> Creating link for $link..."
   ln -s "/mnt/DATA/$link" "$HOME/$link"
 done
+
 echo "=> All links created."
 
 echo "=> Downloading Nerd Fonts..."

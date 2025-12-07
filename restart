@@ -1,0 +1,14 @@
+#! /bin/zsh
+
+run() {
+  if [[ "$DESKTOP_SESSION" == "niri" ]]; then
+    niri msg action spawn -- "$1"
+  elif [[ "$DESKTOP_SESSION" == "hyprland" ]]; then
+    hyprctl dispatch exec "$1"
+  fi
+}
+
+for i in $@ ;do
+killall $i
+run $i
+done
