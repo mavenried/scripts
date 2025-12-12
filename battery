@@ -1,8 +1,6 @@
-#!/bin/env python3
-states = ["󰁻", "󰁻", "󰁼", "󰁽", "󰁾", "󰁿", "󰂀", "󰂀", "󰂂", "󰁹"]
-power_level = -1
-with open("/sys/class/power_supply/BAT1/capacity") as f:
-    power_level = int(f.read())
-
-icon = states[int(power_level / 10) % 10 - 1]
-print(f"{icon}{power_level:>3}%")
+#!/bin/bash
+BATTERY=/sys/class/power_supply/BAT1
+PCT=$(mavencore battery $BATTERY)
+ICO=$(mavencore battery-icon $BATTERY)
+printf "$ICO %3s%%" $PCT
+echo

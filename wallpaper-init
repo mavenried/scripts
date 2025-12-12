@@ -10,6 +10,7 @@ MODE=/mnt/DATA/Pictures/.wallpaper-mode-static
 function restart_mpvpaper_with() {
   nohup mpvpaper -o "--no-audio --loop --scale=nearest --cscale=nearest" "$MONITOR" "$1" >/dev/null 2>&1 &
 }
+
 case $1 in
 toggle-live)
   if [[ -e "$FLAG" ]]; then
@@ -30,10 +31,15 @@ toggle-static)
 esac
 
 if [[ -e "$MODE" ]]; then
-  killall mpvpaper
-  restart_mpvpaper_with $STATIC
+  pidof mpvpaper && killall mpvpaper
+  if !(pidof swww-daemon); then
+    notify-send "MavenCore" "Starting swww-daemon" -i ~/Pictures/AVATAR
+    swww-daemon &
+    disown
+  fi
+  swww img $STATIC -t none
   CURRENT=$STATIC
-  notify-send "MavenCore" "Static wallpaper updated."
+  notify-send "MavenCore" "Static wallpaper updated." -i ~/Pictures/AVATAR
 
 else
 
@@ -41,13 +47,13 @@ else
   CURRENT=$FRAME
   if [[ -e $FLAG ]]; then
     restart_mpvpaper_with $FRAME
-    notify-send "MavenCore" "Live wallpaper disabled."
+    notify-send "MavenCore" "Live wallpaper disabled." -i ~/Pictures/AVATAR
   else
     restart_mpvpaper_with $LIVE
-    notify-send "MavenCore" "Live wallpaper enabled."
+    notify-send "MavenCore" "Live wallpaper enabled." -i ~/Pictures/AVATAR
   fi
 fi
 
 magick $CURRENT -scale 20% -blur 0x2.5 -scale 500% -colorize 50% -fill black ~/Pictures/C
 mv ~/Pictures/C ~/Pictures/CURRENT_BLUR
-notify-send "MavenCore" "Finished Blurring."
+notify-send "MavenCore" "Finished Blurring." -i ~/Pictures/AVATAR

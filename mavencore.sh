@@ -1,7 +1,5 @@
 #!/bin/bash
 
-# This script installs a list of software packages for setting up my computer.
-
 # List of packages to install
 packages=(
   "bat"
@@ -9,7 +7,6 @@ packages=(
   "clang"
   "cloudflared"
   "cmake"
-  "dunst"
   "dysk"
   "eza"
   "fzf"
@@ -31,7 +28,6 @@ packages=(
   "libfprint"
   "libfprint-2-tod1-goodix"
   "macchina"
-  "mako"
   "mpvpaper"
   "neovim"
   "network-manager-applet"
@@ -44,6 +40,7 @@ packages=(
   "python-psutil"
   "polkit-gnome"
   "qbittorrent"
+  "quickshell"
   "rofi-wayland"
   "rsync"
   "sshpass"
