@@ -1,3 +1,4 @@
+#!/bin/env python3
 import random
 names = ["Jacob", "Jino", "Joseph", "Lia", "John", "Paul"]
 
