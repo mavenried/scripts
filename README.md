@@ -4,5 +4,3 @@
 <p align="center" >
   These are random scripts I have written for various purposes.
 </p>
-
-no further comments...
