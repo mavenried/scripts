@@ -14,4 +14,4 @@ SUMMARY=$(gum input --value "$TYPE$SCOPE: " --placeholder "Summary of this chang
 DESCRIPTION=$(gum write --placeholder "Details of this change")
 
 gum confirm "Commit changes?" && gum spin --title='Committing...' --show-output -- git commit -m "$SUMMARY" -m "$DESCRIPTION"
-gum confirm "Push changes?" && gum spin --title='Pushing...' --show-output git push
+gum confirm "Push changes?" && gum spin --title='Pushing...' --show-output /mnt/DATA/scripts/gp

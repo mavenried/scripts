@@ -28,6 +28,7 @@ set_theme() {
 }
 
 case $1 in
+
 cpcn)
   colorctl vars +bg-color=181824
   colorctl vars "+rofi-bg-color-tr=hsla(240, 21%, 12%, 50%)"
@@ -42,11 +43,12 @@ cpcn)
   colorctl vars +bg-color=181825
   colorctl vars +ghostty_theme=CatppuccinMocha
 
-  colorctl vars +qs-bgnd="Qt.rgba(0.094, 0.094, 0.145, 0.8)"
+  # colorctl vars +qs-bgnd="Qt.rgba(0.094, 0.094, 0.145, 0.8)"
+  colorctl vars +qs-bgnd="\"#181825\""
   colorctl vars +qs-cpuc="#cba6f7"
   colorctl vars +qs-mmry="#89b4fa"
   colorctl vars +qs-disk="#94e2d5"
-  colorctl vars +qs-wksp="#89b4fa"
+  colorctl vars +qs-wksp="#181825"
   colorctl vars +qs-idle="#89b4fa"
   colorctl vars +qs-bglt="#f9e2af"
   colorctl vars +qs-wifi="#fab387"
@@ -54,7 +56,6 @@ cpcn)
   colorctl vars +qs-name="#a6e3a1"
   colorctl vars +qs-uptm="#a6e3a1"
   colorctl vars +qs-clck="#cdd6f4"
-  colorctl vars +qs-sptr="#585b70"
   colorctl vars +qs-powr="#f9e2af"
   colorctl vars +qs-pfle="#94e2d5"
   colorctl vars +qs-bat1="#a6e3a1"
@@ -64,22 +65,20 @@ cpcn)
   colorctl vars +qs-bat5="#f38ba8"
   colorctl vars +qs-acct="#cba6f7"
 
-  ln /mnt/DATA/Pictures/Wallpapers/cpcn.jpg /mnt/DATA/Pictures/CURRENT -sf
+  ln /mnt/DATA/Pictures/Wallpapers/cpcn.png /mnt/DATA/Pictures/CURRENT -sf
   ln ~/.config/waybar/colors/catppuccin-mocha.css ~/.config/waybar/colors.css -sf
 
-  if [[ $2 == teal ]] ;then
-    set_theme Catppuccin-Teal-Dark teal Adwaita-Teal 94e2d5 teal 
-    else if [[ $2 == purple ]];then
-    set_theme Catppuccin-Purple-Dark purple Cpcn-Purple cba6f7 mauve 
-  else if [[ $2 == red ]];then
-    set_theme Catppuccin-Red-Dark red Adwaita-Red f38ba8 red 
-  else if
-    [[ $2 == green ]];then
-    set_theme Catppuccin-Green-Dark green Adwaita-Green a6e3a1 green 
-  else if
-    [[ $2 == orange ]]; then
-    set_theme Catppuccin-Orange-Dark orange Adwaita-Orange fab387 peach 
-  else 
+  if [[ $2 == teal ]]; then
+    set_theme Catppuccin-Teal-Dark teal Adwaita-Teal 94e2d5 teal
+  elif [[ $2 == purple ]]; then
+    set_theme Catppuccin-Purple-Dark purple Cpcn-Purple cba6f7 mauve
+  elif [[ $2 == red ]]; then
+    set_theme Catppuccin-Red-Dark red Adwaita-Red f38ba8 red
+  elif [[ $2 == green ]]; then
+    set_theme Catppuccin-Green-Dark green Adwaita-Green a6e3a1 green
+  elif [[ $2 == orange ]]; then
+    set_theme Catppuccin-Orange-Dark orange Adwaita-Orange fab387 peach
+  else
     echo "Not a valid vairant: {teal|purple|red|green|orange}"
   fi
   ;;
@@ -96,28 +95,27 @@ gruv)
   colorctl vars "+rofi-bg-color-tr=hsla(0, 0, 16%, 50%)"
   colorctl vars +ghostty_theme=GruvboxDark
 
-  colorctl vars +qs-bgnd="Qt.rgba(0.094, 0.094, 0.145, 0.8)"
-  colorctl vars +qs-cpuc="#cba6f7"
-  colorctl vars +qs-mmry="#89b4fa"
-  colorctl vars +qs-disk="#94e2d5"
-  colorctl vars +qs-wksp="#89b4fa"
-  colorctl vars +qs-idle="#89b4fa"
+  # colorctl vars +qs-bgnd="Qt.rgba(0.16, 0.16, 0.16, 0.8)"
+  colorctl vars +qs-bgnd="\"#282828\""
+  colorctl vars +qs-cpuc="#d3869b"
+  colorctl vars +qs-mmry="#458588"
+  colorctl vars +qs-disk="#689d6a"
+  colorctl vars +qs-wksp="#282828"
+  colorctl vars +qs-idle="#458588"
   colorctl vars +qs-bglt="#f9e2af"
   colorctl vars +qs-wifi="#fab387"
-  colorctl vars +qs-dstr="#a6e3a1"
-  colorctl vars +qs-name="#a6e3a1"
-  colorctl vars +qs-uptm="#a6e3a1"
-  colorctl vars +qs-clck="#cdd6f4"
-  colorctl vars +qs-sptr="#585b70"
-  colorctl vars +qs-powr="#f9e2af"
-  colorctl vars +qs-pfle="#94e2d5"
-  colorctl vars +qs-bat1="#a6e3a1"
+  colorctl vars +qs-dstr="#b8bb26"
+  colorctl vars +qs-name="#ebdbb2"
+  colorctl vars +qs-uptm="#b8bb26"
+  colorctl vars +qs-clck="#ebdbb2"
+  colorctl vars +qs-powr="#d79921"
+  colorctl vars +qs-pfle="#689d6a"
+  colorctl vars +qs-bat1="#b8bb26"
   colorctl vars +qs-bat2="#94e2d5"
   colorctl vars +qs-bat3="#f9e2af"
   colorctl vars +qs-bat4="#fab387"
   colorctl vars +qs-bat5="#f38ba8"
   colorctl vars +qs-acct="#cba6f7"
-
 
   ln /mnt/DATA/Pictures/Wallpapers/gruv.png /mnt/DATA/Pictures/CURRENT -sf
   ln ~/.config/waybar/colors/gruvbox.css ~/.config/waybar/colors.css -sf
