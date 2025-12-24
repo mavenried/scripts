@@ -1,9 +1,9 @@
 #!/bin/bash
 
 function run() {
-  if [[ "$DESKTOP_SESSION" == "niri" ]]; then
+  if [[ "$XDG_CURRENT_DESKTOP" == "niri" ]]; then
     niri msg action spawn -- "$@"
-  elif [[ "$DESKTOP_SESSION" == "hyprland" ]]; then
+  elif [[ "$XDG_CURRENT_DESKTOP" == "Hyprland" ]]; then
     hyprctl dispatch exec "$@"
   fi
 }
@@ -11,5 +11,6 @@ function run() {
 for i in $@; do
   killall $i
   run $i
+  sleep 0.25
   notify-send MavenCore "Restarted $i" -i "/mnt/DATA/Pictures/AVATAR"
 done

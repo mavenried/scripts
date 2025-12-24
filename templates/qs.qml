@@ -7,6 +7,8 @@ Singleton {
     readonly property color cpuc: "$[qs-cpuc]"
     readonly property color mmry: "$[qs-mmry]"
     readonly property color disk: "$[qs-disk]"
+    readonly property color txt1: "$[qs-txt1]"
+    readonly property color txt2: "$[qs-txt2]"
     readonly property color wksp: "$[qs-wksp]"
     readonly property color idle: "$[qs-idle]"
     readonly property color bglt: "$[qs-bglt]"
@@ -25,4 +27,5 @@ Singleton {
     readonly property color bat5: "$[qs-bat5]"
     readonly property color acct: "#$[accent-color]"
     readonly property int radius: 15
+
 }

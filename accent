@@ -56,6 +56,8 @@ cpcn)
   colorctl vars +qs-name="#a6e3a1"
   colorctl vars +qs-uptm="#a6e3a1"
   colorctl vars +qs-clck="#cdd6f4"
+  colorctl vars +qs-txt1="#cdd6f4"
+  colorctl vars +qs-txt2="#a6adc8"
   colorctl vars +qs-powr="#f9e2af"
   colorctl vars +qs-pfle="#94e2d5"
   colorctl vars +qs-bat1="#a6e3a1"
@@ -63,7 +65,6 @@ cpcn)
   colorctl vars +qs-bat3="#f9e2af"
   colorctl vars +qs-bat4="#fab387"
   colorctl vars +qs-bat5="#f38ba8"
-  colorctl vars +qs-acct="#cba6f7"
 
   ln /mnt/DATA/Pictures/Wallpapers/cpcn.png /mnt/DATA/Pictures/CURRENT -sf
   ln ~/.config/waybar/colors/catppuccin-mocha.css ~/.config/waybar/colors.css -sf
@@ -102,8 +103,8 @@ gruv)
   colorctl vars +qs-disk="#689d6a"
   colorctl vars +qs-wksp="#282828"
   colorctl vars +qs-idle="#458588"
-  colorctl vars +qs-bglt="#f9e2af"
-  colorctl vars +qs-wifi="#fab387"
+  colorctl vars +qs-bglt="#d79921"
+  colorctl vars +qs-wifi="#d65d0e"
   colorctl vars +qs-dstr="#b8bb26"
   colorctl vars +qs-name="#ebdbb2"
   colorctl vars +qs-uptm="#b8bb26"
@@ -111,11 +112,12 @@ gruv)
   colorctl vars +qs-powr="#d79921"
   colorctl vars +qs-pfle="#689d6a"
   colorctl vars +qs-bat1="#b8bb26"
-  colorctl vars +qs-bat2="#94e2d5"
-  colorctl vars +qs-bat3="#f9e2af"
-  colorctl vars +qs-bat4="#fab387"
-  colorctl vars +qs-bat5="#f38ba8"
-  colorctl vars +qs-acct="#cba6f7"
+  colorctl vars +qs-bat2="#689d6a"
+  colorctl vars +qs-bat3="#d79921"
+  colorctl vars +qs-bat4="#fe8019"
+  colorctl vars +qs-bat5="#cc241d"
+  colorctl vars +qs-txt1="#ebdbb2"
+  colorctl vars +qs-txt2="#aaaaaa"
 
   ln /mnt/DATA/Pictures/Wallpapers/gruv.png /mnt/DATA/Pictures/CURRENT -sf
   ln ~/.config/waybar/colors/gruvbox.css ~/.config/waybar/colors.css -sf

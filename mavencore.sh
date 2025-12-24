@@ -18,6 +18,7 @@ packages=(
   "github-cli"
   "grim"
   "gum"
+  "helix"
   "hypridle"
   "hyprland"
   "hyprlock"
@@ -29,6 +30,7 @@ packages=(
   "libfprint-2-tod1-goodix"
   "macchina"
   "mpvpaper"
+  "nautilus"
   "neovim"
   "network-manager-applet"
   "niri"
@@ -53,6 +55,7 @@ packages=(
   "wine"
   "wl-clipboard"
   "xwayland-satellite"
+  "zed"
   "zellij"
   "zen-browser"
   "zip"
@@ -61,6 +64,13 @@ packages=(
   "zsh-autosuggestions"
   "zsh-completions"
   "zsh-syntax-highlighting"
+
+  # Lsp
+  "bash-language-server"
+  "hyprls-git"
+  "vscode-json-languageserver"
+  "taplo"
+  "ty"
 )
 
 rust_packages=(
@@ -69,6 +79,8 @@ rust_packages=(
   'lsr-nf'
   "musicman"
   "proj-cmd"
+  'slint-lsp'
+  "kdlfmt"
 )
 
 flatpak_apps=(

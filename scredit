@@ -2,7 +2,7 @@
 
 cd /mnt/DATA/scripts/
 for i in $@; do
-    nvim $i
+  $EDITOR $i
 done
 
 chmod +x /mnt/DATA/scripts/*

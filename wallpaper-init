@@ -37,7 +37,7 @@ if [[ -e "$MODE" ]]; then
     swww-daemon &
     disown
   fi
-  swww img $STATIC -t none
+  swww img $STATIC 
   CURRENT=$STATIC
   notify-send "MavenCore" "Static wallpaper updated." -i ~/Pictures/AVATAR
 
