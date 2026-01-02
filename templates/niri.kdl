@@ -30,13 +30,6 @@ layout {
         inactive-color "#$[bg-color]"
         urgent-color "#$[accent-color]"
     }
-    shadow {
-        on
-        softness 30
-        spread 5
-        offset x=0 y=5
-        color "#282828"
-    }
     struts {
 
     }

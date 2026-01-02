@@ -1,4 +1,4 @@
-#! /bin/bash
+#!/bin/bash
 
 set_theme() {
   colorctl vars +accent-color="$4"
@@ -69,18 +69,12 @@ cpcn)
   ln /mnt/DATA/Pictures/Wallpapers/cpcn.png /mnt/DATA/Pictures/CURRENT -sf
   ln ~/.config/waybar/colors/catppuccin-mocha.css ~/.config/waybar/colors.css -sf
 
-  if [[ $2 == teal ]]; then
-    set_theme Catppuccin-Teal-Dark teal Adwaita-Teal 94e2d5 teal
-  elif [[ $2 == purple ]]; then
-    set_theme Catppuccin-Purple-Dark purple Cpcn-Purple cba6f7 mauve
-  elif [[ $2 == red ]]; then
-    set_theme Catppuccin-Red-Dark red Adwaita-Red f38ba8 red
-  elif [[ $2 == green ]]; then
-    set_theme Catppuccin-Green-Dark green Adwaita-Green a6e3a1 green
-  elif [[ $2 == orange ]]; then
-    set_theme Catppuccin-Orange-Dark orange Adwaita-Orange fab387 peach
-  else
-    echo "Not a valid vairant: {teal|purple|red|green|orange}"
+  if   [[ $2 == teal ]];   then set_theme Catppuccin-Teal-Dark teal Adwaita-Teal 94e2d5 teal
+  elif [[ $2 == purple ]]; then set_theme Catppuccin-Purple-Dark purple Cpcn-Purple cba6f7 mauve
+  elif [[ $2 == red ]];    then set_theme Catppuccin-Red-Dark red Adwaita-Red f38ba8 red
+  elif [[ $2 == green ]];  then set_theme Catppuccin-Green-Dark green Adwaita-Green a6e3a1 green
+  elif [[ $2 == orange ]]; then set_theme Catppuccin-Orange-Dark orange Adwaita-Orange fab387 peach
+  else echo "Not a valid vairant: {teal|purple|red|green|orange}"
   fi
   ;;
 gruv)
@@ -140,6 +134,48 @@ gruv)
     set_theme Gruvbox-Yellow-Dark yellow gruvbox_dark d79921 yellow ||
     echo "Not a valid vairant: {aqua|blue|green|orange|pink|purple|red|yellow}"
   ;;
+black)
+
+  colorctl vars +starship-palette=mavenblack
+  colorctl vars +nvim-colorscheme=gruvbox
+  colorctl vars +hyprlock-hour-color=eeeeee
+  colorctl vars +hyprlock-minutes-color=eeeeee
+  colorctl vars +hyprlock-battery-color=eeeeee
+  colorctl vars +hyprlock-uptime-color=eeeeee
+  colorctl vars +text-color=eeeeee
+  colorctl vars +dark-bg-color=000000
+  colorctl vars +bg-color=000000
+  colorctl vars "+rofi-bg-color-tr=hsla(0, 0, 16%, 50%)"
+  colorctl vars +ghostty_theme=MavenBlack
+
+  # colorctl vars +qs-bgnd="Qt.rgba(0.16, 0.16, 0.16, 0.8)"
+  colorctl vars +qs-bgnd="\"#000000\""
+  colorctl vars +qs-cpuc="#eeeeee"
+  colorctl vars +qs-mmry="#eeeeee"
+  colorctl vars +qs-disk="#eeeeee"
+  colorctl vars +qs-wksp="#000000"
+  colorctl vars +qs-idle="#eeeeee"
+  colorctl vars +qs-bglt="#eeeeee"
+  colorctl vars +qs-wifi="#eeeeee"
+  colorctl vars +qs-dstr="#eeeeee"
+  colorctl vars +qs-name="#eeeeee"
+  colorctl vars +qs-uptm="#eeeeee"
+  colorctl vars +qs-clck="#eeeeee"
+  colorctl vars +qs-powr="#eeeeee"
+  colorctl vars +qs-pfle="#eeeeee"
+  colorctl vars +qs-bat1="#eeeeee"
+  colorctl vars +qs-bat2="#eeeeee"
+  colorctl vars +qs-bat3="#eeeeee"
+  colorctl vars +qs-bat4="#eeeeee"
+  colorctl vars +qs-bat5="#eeeeee"
+  colorctl vars +qs-txt1="#eeeeee"
+  colorctl vars +qs-txt2="#aaaaaa"
+
+  ln /mnt/DATA/Pictures/Wallpapers/black.png /mnt/DATA/Pictures/CURRENT -sf
+  ln ~/.config/waybar/colors/gruvbox.css ~/.config/waybar/colors.css -sf
+
+  set_theme Gruvbox-Yellow-Dark blue gruvbox_dark 59cd90 blue 
+ ;;
 *)
   echo "Usage: accent {cpcn|gruv}"
   exit 1
