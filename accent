@@ -19,8 +19,9 @@ set_theme() {
   echo "Applying Colorctl..."
   colorctl apply >/dev/null
 
-  echo "Initializing Wallpaper"
-  /mnt/DATA/scripts/wallpaper-init >/dev/null
+  echo "Reloading Wallpaper"
+  qs ipc call wallpaper reload
+  # /mnt/DATA/scripts/wallpaper-init >/dev/null
 
   echo "Overriding flatpak themes (need sudo)"
   sudo flatpak override --env=GTK_THEME=$1
@@ -138,43 +139,43 @@ black)
 
   colorctl vars +starship-palette=mavenblack
   colorctl vars +nvim-colorscheme=gruvbox
-  colorctl vars +hyprlock-hour-color=eeeeee
-  colorctl vars +hyprlock-minutes-color=eeeeee
-  colorctl vars +hyprlock-battery-color=eeeeee
-  colorctl vars +hyprlock-uptime-color=eeeeee
+  colorctl vars +hyprlock-hour-color=59cd90
+  colorctl vars +hyprlock-minutes-color=ba8baf
+  colorctl vars +hyprlock-battery-color=7cafc2
+  colorctl vars +hyprlock-uptime-color=a1b56c
   colorctl vars +text-color=eeeeee
   colorctl vars +dark-bg-color=000000
   colorctl vars +bg-color=000000
-  colorctl vars "+rofi-bg-color-tr=hsla(0, 0, 16%, 50%)"
+  colorctl vars "+rofi-bg-color-tr=hsla(0, 0, 0%, 50%)"
   colorctl vars +ghostty_theme=MavenBlack
 
   # colorctl vars +qs-bgnd="Qt.rgba(0.16, 0.16, 0.16, 0.8)"
-  colorctl vars +qs-bgnd="\"#000000\""
-  colorctl vars +qs-cpuc="#eeeeee"
-  colorctl vars +qs-mmry="#eeeeee"
-  colorctl vars +qs-disk="#eeeeee"
-  colorctl vars +qs-wksp="#000000"
-  colorctl vars +qs-idle="#eeeeee"
+  colorctl vars +qs-bgnd="\"#141414\""
+  colorctl vars +qs-cpuc="#ba8baf"
+  colorctl vars +qs-mmry="#59cd90"
+  colorctl vars +qs-disk="#7cafc2"
+  colorctl vars +qs-wksp="#eeeeee"
+  colorctl vars +qs-idle="#ba8baf"
   colorctl vars +qs-bglt="#eeeeee"
-  colorctl vars +qs-wifi="#eeeeee"
-  colorctl vars +qs-dstr="#eeeeee"
+  colorctl vars +qs-wifi="#f7ca88"
+  colorctl vars +qs-dstr="#7cafc2"
   colorctl vars +qs-name="#eeeeee"
-  colorctl vars +qs-uptm="#eeeeee"
+  colorctl vars +qs-uptm="#a1b56c"
   colorctl vars +qs-clck="#eeeeee"
-  colorctl vars +qs-powr="#eeeeee"
-  colorctl vars +qs-pfle="#eeeeee"
-  colorctl vars +qs-bat1="#eeeeee"
-  colorctl vars +qs-bat2="#eeeeee"
-  colorctl vars +qs-bat3="#eeeeee"
-  colorctl vars +qs-bat4="#eeeeee"
-  colorctl vars +qs-bat5="#eeeeee"
+  colorctl vars +qs-powr="#f7ca88"
+  colorctl vars +qs-pfle="#59cd90"
+  colorctl vars +qs-bat1="#a1b56c"
+  colorctl vars +qs-bat2="#59cd90"
+  colorctl vars +qs-bat3="#7cafc2"
+  colorctl vars +qs-bat4="#f7ca88"
+  colorctl vars +qs-bat5="#ab4642"
   colorctl vars +qs-txt1="#eeeeee"
   colorctl vars +qs-txt2="#aaaaaa"
 
   ln /mnt/DATA/Pictures/Wallpapers/black.png /mnt/DATA/Pictures/CURRENT -sf
   ln ~/.config/waybar/colors/gruvbox.css ~/.config/waybar/colors.css -sf
 
-  set_theme Gruvbox-Yellow-Dark blue gruvbox_dark 59cd90 blue 
+  set_theme Kripton blue Cosmic 141414 blue #59cd90 blue 
  ;;
 *)
   echo "Usage: accent {cpcn|gruv}"
