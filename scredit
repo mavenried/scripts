@@ -1,8 +1,13 @@
 #!/bin/sh
 
 cd /mnt/DATA/scripts/
-for i in $@; do
-  $EDITOR $i
-done
+if [[ $# == 0 ]]; then
+  FILE=$(command ls | fzf)
+  $EDITOR $FILE
+else
+  for i in $@; do
+    $EDITOR $i
+  done
+fi
 
 chmod +x /mnt/DATA/scripts/*
