@@ -19,8 +19,8 @@ set_theme() {
   echo "Applying Colorctl..."
   colorctl apply >/dev/null
 
-  echo "Reloading Wallpaper"
-  qs ipc call wallpaper reload
+  echo "Reloading Wallpaper after 2s"
+  zsh -c "sleep 2 ; qs ipc call wallpaper reload" &
   # /mnt/DATA/scripts/wallpaper-init >/dev/null
 
   echo "Overriding flatpak themes (need sudo)"
@@ -70,12 +70,18 @@ cpcn)
   ln /mnt/DATA/Pictures/Wallpapers/cpcn.png /mnt/DATA/Pictures/CURRENT -sf
   ln ~/.config/waybar/colors/catppuccin-mocha.css ~/.config/waybar/colors.css -sf
 
-  if   [[ $2 == teal ]];   then set_theme Catppuccin-Teal-Dark teal Adwaita-Teal 94e2d5 teal
-  elif [[ $2 == purple ]]; then set_theme Catppuccin-Purple-Dark purple Cpcn-Purple cba6f7 mauve
-  elif [[ $2 == red ]];    then set_theme Catppuccin-Red-Dark red Adwaita-Red f38ba8 red
-  elif [[ $2 == green ]];  then set_theme Catppuccin-Green-Dark green Adwaita-Green a6e3a1 green
-  elif [[ $2 == orange ]]; then set_theme Catppuccin-Orange-Dark orange Adwaita-Orange fab387 peach
-  else echo "Not a valid vairant: {teal|purple|red|green|orange}"
+  if [[ $2 == teal ]]; then
+    set_theme Catppuccin-Teal-Dark teal Adwaita-Teal 94e2d5 teal
+  elif [[ $2 == purple ]]; then
+    set_theme Catppuccin-Purple-Dark purple Cpcn-Purple cba6f7 mauve
+  elif [[ $2 == red ]]; then
+    set_theme Catppuccin-Red-Dark red Adwaita-Red f38ba8 red
+  elif [[ $2 == green ]]; then
+    set_theme Catppuccin-Green-Dark green Adwaita-Green a6e3a1 green
+  elif [[ $2 == orange ]]; then
+    set_theme Catppuccin-Orange-Dark orange Adwaita-Orange fab387 peach
+  else
+    echo "Not a valid vairant: {teal|purple|red|green|orange}"
   fi
   ;;
 gruv)
@@ -175,8 +181,8 @@ black)
   ln /mnt/DATA/Pictures/Wallpapers/black.png /mnt/DATA/Pictures/CURRENT -sf
   ln ~/.config/waybar/colors/gruvbox.css ~/.config/waybar/colors.css -sf
 
-  set_theme Kripton blue Cosmic 141414 blue #59cd90 blue 
- ;;
+  set_theme Kripton blue Cosmic 141414 blue #59cd90 blue
+  ;;
 *)
   echo "Usage: accent {cpcn|gruv}"
   exit 1

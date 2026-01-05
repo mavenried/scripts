@@ -27,5 +27,4 @@ Singleton {
     readonly property color bat5: "$[qs-bat5]"
     readonly property color acct: "#$[accent-color]"
     readonly property int radius: 15
-
 }
