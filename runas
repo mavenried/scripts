@@ -1,0 +1,16 @@
+#!/bin/zsh
+help() {
+  echo "\x1b[33mrunas\x1b[0m - run a command with a dummy prompt"
+  echo "Syntax: \x1b[32mrunas\x1b[0m <user> <host> <dummy_path> <command_to_exec>"
+}
+
+if [[ $1 == "-h" || $1 == "--help" ]]; then
+ help
+elif [[ $# < 4 ]]; then
+ printf "\x1b[31mInvalid no of args\x1b[0m\n"
+ help
+ exit 1
+fi 
+
+printf "\x1b[32m%s@%s\x1b[0m:\x1b[34m%s\x1b[0m\$ %s\n" "$1" "$2" "$3" "$4"
+exec $4

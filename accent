@@ -145,7 +145,7 @@ black)
   colorctl vars +hyprlock-uptime-color=a1b56c
   colorctl vars +text-color=eeeeee
   colorctl vars +dark-bg-color=000000
-  colorctl vars +bg-color=000000
+  colorctl vars +bg-color=141414
   colorctl vars "+rofi-bg-color-tr=hsla(0, 0, 0%, 50%)"
   colorctl vars +ghostty_theme=MavenBlack
 
