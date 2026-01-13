@@ -17,11 +17,8 @@ set_theme() {
   ln ~/.themes/"$1"/gtk-4.0/gtk-dark.css ~/.config/gtk-4.0/gtk-dark.css -sf
 
   echo "Applying Colorctl..."
+  sleep 0.1
   colorctl apply >/dev/null
-
-  echo "Reloading Wallpaper after 2s"
-  zsh -c "sleep 2 ; qs ipc call wallpaper reload" &
-  # /mnt/DATA/scripts/wallpaper-init >/dev/null
 
   echo "Overriding flatpak themes (need sudo)"
   sudo flatpak override --env=GTK_THEME=$1
@@ -67,7 +64,7 @@ cpcn)
   colorctl vars +qs-bat4="#fab387"
   colorctl vars +qs-bat5="#f38ba8"
 
-  ln /mnt/DATA/Pictures/Wallpapers/cpcn.png /mnt/DATA/Pictures/CURRENT -sf
+  cp /mnt/DATA/Pictures/Wallpapers/cpcn.png /mnt/DATA/Pictures/CURRENT
   ln ~/.config/waybar/colors/catppuccin-mocha.css ~/.config/waybar/colors.css -sf
 
   if [[ $2 == teal ]]; then
@@ -120,7 +117,7 @@ gruv)
   colorctl vars +qs-txt1="#ebdbb2"
   colorctl vars +qs-txt2="#aaaaaa"
 
-  ln /mnt/DATA/Pictures/Wallpapers/gruv.png /mnt/DATA/Pictures/CURRENT -sf
+  cp /mnt/DATA/Pictures/Wallpapers/gruv.png /mnt/DATA/Pictures/CURRENT
   ln ~/.config/waybar/colors/gruvbox.css ~/.config/waybar/colors.css -sf
 
   [[ $2 == purple ]] &&
@@ -178,7 +175,7 @@ black)
   colorctl vars +qs-txt1="#eeeeee"
   colorctl vars +qs-txt2="#aaaaaa"
 
-  ln /mnt/DATA/Pictures/Wallpapers/black.png /mnt/DATA/Pictures/CURRENT -sf
+  cp /mnt/DATA/Pictures/Wallpapers/black.png /mnt/DATA/Pictures/CURRENT
   ln ~/.config/waybar/colors/gruvbox.css ~/.config/waybar/colors.css -sf
 
   set_theme Kripton blue Cosmic 141414 blue #59cd90 blue
