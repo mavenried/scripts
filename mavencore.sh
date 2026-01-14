@@ -203,5 +203,8 @@ echo "=> Fonts Downloaded."
 echo "=> Changing default shell to zsh..."
 sudo chsh -s /bin/zsh
 echo "=> Shell Change done. "
+echo "=> Adding BlackArch repo."
+curl https://blackarch.org/strap.sh | sudo sh
+echo "=> BlackArch strapping done."
 
 echo "=== Completed ==="
