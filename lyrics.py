@@ -16,7 +16,7 @@ for i, singer in enumerate(singers):
         data = raw.read()
 
         soup = BeautifulSoup(data, "html.parser")
-        print(f"From: {url}")
+        # print(f"From: {url}")
         print(
             soup.find_all("div", attrs={"class": None, "id": None})[0]
             .get_text()
