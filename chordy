@@ -1,0 +1,102 @@
+#!/usr/bin/env python3
+
+import sys
+import numpy as np
+import simpleaudio as sa
+
+SAMPLE_RATE = 44100
+DURATION = 1
+VOLUME = 0.3
+
+# 4th octave base frequencies
+NOTE_FREQS = {
+    "C": 261.63,
+    "C#": 277.18,
+    "Db": 277.18,
+    "D": 293.66,
+    "D#": 311.13,
+    "Eb": 311.13,
+    "E": 329.63,
+    "F": 349.23,
+    "F#": 369.99,
+    "Gb": 369.99,
+    "G": 392.00,
+    "G#": 415.30,
+    "Ab": 415.30,
+    "A": 440.00,
+    "A#": 466.16,
+    "Bb": 466.16,
+    "B": 493.88,
+}
+
+# intervals in semitones
+CHORDS = {
+    "": [0, 4, 7],  # major
+    "m": [0, 3, 7],  # minor
+    "7": [0, 4, 7, 10],  # dominant 7
+    "maj7": [0, 4, 7, 11],
+    "m7": [0, 3, 7, 10],
+    "dim": [0, 3, 6],
+}
+
+
+def play_chord(freqs):
+    t = np.linspace(0, DURATION, int(SAMPLE_RATE * DURATION), False)
+    wave = np.zeros_like(t)
+
+    for f in freqs:
+        wave += np.sin(2 * np.pi * f * t)
+
+    wave /= len(freqs)  # prevent clipping
+    audio = (wave * (2**15 - 1) * VOLUME).astype(np.int16)
+
+    sa.play_buffer(audio, 1, 2, SAMPLE_RATE).wait_done()
+
+
+def parse_chord(inval):
+    out = []
+
+    for token in inval.split("|"):
+        token = token.strip()
+
+        # root note (C, C#, Db, etc.)
+        root = token[:2] if token[:2] in NOTE_FREQS else token[:1]
+        rest = token[len(root) :]
+
+        # extract octave digits (if any)
+        octave_str = ""
+        i = 0
+        while i < len(rest) and rest[i].isdigit():
+            octave_str += rest[i]
+            i += 1
+
+        octave = int(octave_str) if octave_str else 4
+        quality = rest[i:]
+
+        if root not in NOTE_FREQS or quality not in CHORDS:
+            return None
+
+        # shift base frequency to desired octave
+        root_freq = NOTE_FREQS[root] * (2 ** (octave - 4))
+
+        freqs = [root_freq * (2 ** (interval / 12)) for interval in CHORDS[quality]]
+
+        out.append(freqs)
+
+    return out
+
+
+def main():
+    for line in sys.stdin:
+        line = line.strip()
+        if not line:
+            continue
+
+        freqs = parse_chord(line)
+        if any(freqs):
+            for freq in freqs:
+                play_chord(freq)
+
+
+if __name__ == "__main__":
+    main()
