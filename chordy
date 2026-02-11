@@ -33,6 +33,7 @@ NOTE_FREQS = {
 CHORDS = {
     "": [0, 4, 7],  # major
     "m": [0, 3, 7],  # minor
+    "5": [0, 7],
     "7": [0, 4, 7, 10],  # dominant 7
     "maj7": [0, 4, 7, 11],
     "m7": [0, 3, 7, 10],
@@ -56,27 +57,35 @@ def play_chord(freqs):
 def parse_chord(inval):
     out = []
 
+    # exclude "" from suffix matching
+    qualities = sorted(
+        [q for q in CHORDS.keys() if q != ""],
+        key=len,
+        reverse=True,
+    )
+
     for token in inval.split("|"):
         token = token.strip()
 
-        # root note (C, C#, Db, etc.)
         root = token[:2] if token[:2] in NOTE_FREQS else token[:1]
         rest = token[len(root) :]
 
-        # extract octave digits (if any)
-        octave_str = ""
-        i = 0
-        while i < len(rest) and rest[i].isdigit():
-            octave_str += rest[i]
-            i += 1
+        quality = ""
+        for q in qualities:
+            if rest.endswith(q):
+                quality = q
+                rest = rest[: -len(q)]
+                break
 
-        octave = int(octave_str) if octave_str else 4
-        quality = rest[i:]
-
-        if root not in NOTE_FREQS or quality not in CHORDS:
+        # whatever remains must be octave digits (or empty)
+        if rest and not rest.isdigit():
             return None
 
-        # shift base frequency to desired octave
+        octave = int(rest) if rest else 4
+
+        if root not in NOTE_FREQS:
+            return None
+
         root_freq = NOTE_FREQS[root] * (2 ** (octave - 4))
 
         freqs = [root_freq * (2 ** (interval / 12)) for interval in CHORDS[quality]]

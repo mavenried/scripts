@@ -2,7 +2,7 @@
 "$schema" = 'https://starship.rs/config-schema.json'
 palette = "$[starship-palette]"
 format = '$directory$character'
-right_format = "$git_status"
+right_format = "$git_branch$git_status"
 
 
 [shell]
@@ -14,13 +14,34 @@ success_symbol = "[❯](red)[❯](purple)[❯](green)"
 error_symbol = "[❯](purple)[❯](green)[❯](red)"
 vimcmd_symbol = "[❯](green)[❯](red)[❯](purple)"
 
+[git_branch]
+format = '[$branch]($style) '
+style = 'bold blue'
+symbol = ''  # no default branch icon
+
+[git_status]
+format = '[❮$all_status$ahead_behind❯]($style)'
+style = 'blue'
+
+conflicted = '󰞇'
+ahead = '󰜷'
+behind = '󰜮'
+diverged = '󰹹'
+up_to_date = 'U'
+untracked = '?'
+stashed = 'S'
+modified = 'M'
+staged = '+'
+renamed = 'R'
+deleted = 'D'
+
 [directory]
 truncation_length = 2
 truncate_to_repo = true
 truncation_symbol = '-+/'
 style = 'bold blue'
-read_only = "⦿ "
-format = '[$read_only]($read_only_style) [$path]($style) '
+read_only = "*"
+format = '[$read_only]($read_only_style) [❮](blue) [$path]($style) '
 
 [palettes.gatekeeper]
 red = '#ff1a67'
