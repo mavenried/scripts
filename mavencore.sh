@@ -1,16 +1,16 @@
-#!/bin/bash
+#! /bin/bash
 
 # List of packages to install
 packages=(
   "bat"
-  "blueman"
+  "brightnessctl"
   "clang"
   "cloudflared"
   "cmake"
   "dysk"
   "eza"
   "fzf"
-  "fprintd"
+  # "fprintd"
   "gcc"
   "getnf"
   "ghostty"
@@ -26,8 +26,9 @@ packages=(
   "hyprshot"
   "jdk-openjdk"
   "kitty"
-  "libfprint"
-  "libfprint-2-tod1-goodix"
+  # "libfprint"
+  # "libfprint-2-tod1-goodix"
+  "libqalculate"
   "macchina"
   "mpvpaper"
   "nautilus"
@@ -124,6 +125,7 @@ echo "=== MavenCore Installer v1.0 ==="
 echo "Starting installation of software packages..."
 
 # install yay
+sudo pacman -Syu git fakeroot debugedit make
 if ! command -v yay &>/dev/null; then
   echo "=> yay could not be found, installing..."
   git clone https://aur.archlinux.org/yay.git /tmp/yay
@@ -174,28 +176,29 @@ for app in "${flatpak_apps[@]}"; do
 done
 
 # Create Links
-echo "=> Creating symbolic links..."
+if [[ $1 == "-l" ]]; then
+  echo "=> Creating symbolic links..."
 
-for item in "${removeonly[@]}"; do
-  if [ -e "$HOME/$item" ]; then
-    if gum confirm " -> $item exists remove?"; then
-      rm -r "${HOME:?}/$item" || printf "\x1b[31mCould not remove %s, exiting\n\x1b[0m" "$item"
+  for item in "${removeonly[@]}"; do
+    if [ -e "$HOME/$item" ]; then
+      if gum confirm " -> $item exists remove?"; then
+        rm -r "${HOME:?}/$item" || printf "\x1b[31mCould not remove %s, exiting\n\x1b[0m" "$item"
+      fi
     fi
-  fi
-done
+  done
 
-for link in "${links[@]}"; do
-  echo " -> checking $link"
-  if [ -e "$HOME/$link" ] || [ -L "$HOME/$link" ]; then
-    echo " -> $link exists, backing up..."
-    mv "${HOME:?}/$link"{,.bak} || printf "\x1b[31mCould not backup %s, exiting\n\x1b[0m" "$link"
-  fi
-  echo " -> Creating link for $link..."
-  ln -s "/mnt/DATA/$link" "$HOME/$link"
-done
+  for link in "${links[@]}"; do
+    echo " -> checking $link"
+    if [ -e "$HOME/$link" ] || [ -L "$HOME/$link" ]; then
+      echo " -> $link exists, backing up..."
+      mv "${HOME:?}/$link"{,.bak} || printf "\x1b[31mCould not backup %s, exiting\n\x1b[0m" "$link"
+    fi
+    echo " -> Creating link for $link..."
+    ln -s "/mnt/DATA/$link" "$HOME/$link"
+  done
 
-echo "=> All links created."
-
+  echo "=> All links created."
+fi
 echo "=> Downloading Nerd Fonts..."
 getnf -i "JetBrainsMono"
 echo "=> Fonts Downloaded."
