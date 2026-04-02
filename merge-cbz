@@ -17,7 +17,7 @@ for f in "$@"; do
 
   page=1
   shopt -s nullglob
-  for img in "tmp_$chapter"/*.{jpg,jpeg,png,JPG,JPEG,PNG}; do
+  for img in "tmp_$chapter"/*.{jpg,jpeg,png,JPG,JPEG,PNG,webp,WEBP}; do
     cp "$img" "merged/$(printf '%04d' $chapter)_$(printf '%04d' $page).${img##*.}"
     ((page++))
   done

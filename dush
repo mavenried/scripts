@@ -1,0 +1,38 @@
+#!/bin/bash
+
+cols=$(tput cols 2>/dev/null || echo 80)
+
+# colors
+c_reset='\033[0m'
+c_file='\033[0;35m'
+c_dir='\033[1;34m'
+c_total='\033[1;33m'
+
+du -ah --max-depth=1 . 2>/dev/null | sort -rh | while IFS=$'\t' read -r size path; do
+    name=$(basename "$path")
+
+    if [[ "$path" == "." ]]; then
+        label=" total"
+        color="$c_total"
+        name="$(basename $PWD)"
+    elif [ -d "$path" ]; then
+        label=" dir  "
+        color="$c_dir"
+    else
+        label=" file "
+        color="$c_file"
+    fi
+
+    left="${label} ${name}"
+
+    # calculate padding so size touches right edge
+    pad=$(( cols - ${#left} - ${#size} - 2 ))
+    (( pad < 1 )) && pad=1
+
+    printf "%b%s%*s%s%b\n" \
+        "$color" \
+        "$left" \
+        "$pad" "" \
+        "$size" \
+        "$c_reset"
+done

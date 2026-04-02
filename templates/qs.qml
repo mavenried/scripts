@@ -28,6 +28,6 @@ Singleton {
     readonly property color acct: "#$[accent-color]"
 
     readonly property int radius: 15
-    // readonly property string font: "JetbrainsMonoNL Nerd Font"
-    readonly property string font: "DepartureMono Nerd Font"
+    readonly property string font: "JetbrainsMonoNL Nerd Font"
+    // readonly property string font: "DepartureMono Nerd Font"
 }

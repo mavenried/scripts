@@ -1,0 +1,18 @@
+#!/bin/bash
+
+shopt -s nullglob dotglob
+
+for i in *; do
+  [[ "$i" == "." || "$i" == ".." ]] && continue
+
+  if [[ -d "$i" ]]; then
+    type="dir "
+  else
+    type="file"
+  fi
+
+  gum confirm "Delete $type $i?" || continue
+
+  printf "\x1b[31mDeleting: $i\x1b[0m\n"
+  rm -rf -- "$i"
+done

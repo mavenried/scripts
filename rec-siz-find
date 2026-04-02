@@ -1,2 +1,0 @@
-#! /bin/bash
-for file in * .*; do echo "$file: $(du $file -hc | tail -1)"; done
