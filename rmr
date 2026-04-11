@@ -1,6 +1,6 @@
-#!/bin/bash
+#!/bin/zsh
 
-shopt -s nullglob dotglob
+setopt nullglob dotglob numericglobsort
 
 for i in *; do
   [[ "$i" == "." || "$i" == ".." ]] && continue

@@ -1,0 +1,14 @@
+#!/usr/bin/env bash
+
+dir="$1"
+prefix="$2"
+append_word="$3"
+
+[ -z "$dir" ] && echo "Usage: $0 <dir> <prefix> <word>" && exit 1
+
+find "$dir" -type f | while IFS= read -r file; do
+  # skip binary files
+  if file "$file" | grep -q text; then
+    sed -i "/^$prefix/ s/\$/ $append_word/" "$file"
+  fi
+done
