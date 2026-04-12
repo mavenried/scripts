@@ -9,6 +9,7 @@ packages=(
   "cmake"
   "dysk"
   "eza"
+  "freedownloadmanager"
   "fzf"
   # "fprintd"
   "gcc"
@@ -38,11 +39,12 @@ packages=(
   "nodejs"
   "npm"
   "pamixer"
+  "papers"
   "pavucontrol"
   "perl"
-  "python-psutil"
+  # "python-psutil"
   "polkit-gnome"
-  "qbittorrent"
+  # "qbittorrent"
   "quickshell"
   "rofi-wayland"
   "rsync"
@@ -88,12 +90,8 @@ flatpak_apps=(
   "com.discordapp.Discord"
   "com.github.johnfactotum.Foliate"
   "com.heroicgameslauncher.hgl"
-  "com.mattjakeman.ExtensionManager"
-  "com.spotify.Client"
   "info.febvre.Komikku"
   "io.github.realmazharhussain.GdmSettings"
-  "io.github.vikdevelop.SaveDesktop"
-  "org.gnome.Papers"
 )
 
 links=(
@@ -114,6 +112,7 @@ removeonly=(
   "Templates"
   "Videos"
   "Public"
+  "Desktop"
 )
 echo " __  __                        ____               "
 echo "|  \\/  | __ ___   _____ _ __  / ___|___  _ __ ___ "
@@ -206,8 +205,8 @@ echo "=> Fonts Downloaded."
 echo "=> Changing default shell to zsh..."
 sudo chsh -s /bin/zsh
 echo "=> Shell Change done. "
-echo "=> Adding BlackArch repo."
-curl https://blackarch.org/strap.sh | sudo sh
-echo "=> BlackArch strapping done."
+# echo "=> Adding BlackArch repo."
+# curl https://blackarch.org/strap.sh | sudo sh
+# echo "=> BlackArch strapping done."
 
 echo "=== Completed ==="
