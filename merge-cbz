@@ -1,5 +1,4 @@
 #!/bin/bash
-# merge_cbz.sh — Merge multiple CBZ files into one continuous CBZ safely
 
 if [ $# -eq 0 ]; then
   echo "Usage: $0 *.cbz"
