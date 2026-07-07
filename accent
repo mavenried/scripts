@@ -1,189 +1,198 @@
 #!/bin/bash
 
 set_theme() {
-  colorctl vars +accent-color="$4"
-  colorctl vars +waybar-color="$5"
-  colorctl vars +icon-theme="$3"
-  colorctl vars +gtk-theme="$1"
+  local gtk_theme="$1" gsettings_accent="$2" icon_theme="$3" accent_hex="$4" waybar_color="$5"
+
+  colorctl vars +accent-color="$accent_hex"
+  colorctl vars +waybar-color="$waybar_color"
+  colorctl vars +icon-theme="$icon_theme"
+  colorctl vars +gtk-theme="$gtk_theme"
 
   echo "Setting Themes..."
-  gsettings set org.gnome.desktop.interface gtk-theme "$1"
-  gsettings set org.gnome.desktop.interface accent-color "$2"
-  gsettings set org.gnome.desktop.interface icon-theme "$3"
+  gsettings set org.gnome.desktop.interface gtk-theme "$gtk_theme"
+  gsettings set org.gnome.desktop.interface accent-color "$gsettings_accent"
+  gsettings set org.gnome.desktop.interface icon-theme "$icon_theme"
 
   echo "Linking Files..."
-  ln ~/.themes/"$1"/gtk-4.0/asset_themes ~/.config/gtk-4.0/assets -sf
-  ln ~/.themes/"$1"/gtk-4.0/gtk.css ~/.config/gtk-4.0/gtk.css -sf
-  ln ~/.themes/"$1"/gtk-4.0/gtk-dark.css ~/.config/gtk-4.0/gtk-dark.css -sf
+  ln ~/.themes/"$gtk_theme"/gtk-4.0/asset_themes ~/.config/gtk-4.0/assets -sf
+  ln ~/.themes/"$gtk_theme"/gtk-4.0/gtk.css ~/.config/gtk-4.0/gtk.css -sf
+  ln ~/.themes/"$gtk_theme"/gtk-4.0/gtk-dark.css ~/.config/gtk-4.0/gtk-dark.css -sf
 
   echo "Applying Colorctl..."
   sleep 0.1
   colorctl apply >/dev/null
 
   echo "Overriding flatpak themes (need sudo)"
-  sudo flatpak override --env=GTK_THEME="$1"
+  sudo flatpak override --env=GTK_THEME="$gtk_theme"
   exit 0
 }
 
-case $1 in
+apply_vars() {
+  local kv
+  for kv in "$@"; do
+    colorctl vars "+$kv"
+  done
+}
 
+apply_variant() {
+  local -n variants="$1"
+  local key="$2" entry
+  entry="${variants[$key]:-}"
+  if [ -z "$entry" ]; then
+    echo "Not a valid variant: {$(printf '%s\n' "${!variants[@]}" | sort | paste -sd'|')}"
+    return 1
+  fi
+  IFS='|' read -r gtk_theme gsettings_accent icon_theme accent_hex waybar_color <<<"$entry"
+  set_theme "$gtk_theme" "$gsettings_accent" "$icon_theme" "$accent_hex" "$waybar_color"
+}
+
+cpcn_vars=(
+  "bg-color=181824"
+  'rofi-bg-color-tr=hsla(240, 21%, 12%, 50%)'
+  "starship-palette=catppuccin"
+  "nvim-colorscheme=catppuccin"
+  "hyprlock-hour-color=94e2d5"
+  "hyprlock-minutes-color=cba6f7"
+  "hyprlock-battery-color=94e2d5"
+  "hyprlock-uptime-color=74c7ec"
+  "text-color=cdd6f4"
+  "dark-bg-color=11111b"
+  "bg-color=181825"
+  "ghostty_theme=CatppuccinMocha"
+  'qs-bgnd="#181825"'
+  "qs-cpuc=#cba6f7"
+  "qs-mmry=#89b4fa"
+  "qs-disk=#94e2d5"
+  "qs-wksp=#181825"
+  "qs-idle=#89b4fa"
+  "qs-bglt=#f9e2af"
+  "qs-wifi=#fab387"
+  "qs-dstr=#a6e3a1"
+  "qs-name=#a6e3a1"
+  "qs-uptm=#a6e3a1"
+  "qs-clck=#cdd6f4"
+  "qs-txt1=#cdd6f4"
+  "qs-txt2=#a6adc8"
+  "qs-powr=#f9e2af"
+  "qs-pfle=#94e2d5"
+  "qs-bat1=#a6e3a1"
+  "qs-bat2=#94e2d5"
+  "qs-bat3=#f9e2af"
+  "qs-bat4=#fab387"
+  "qs-bat5=#f38ba8"
+)
+
+gruv_vars=(
+  "starship-palette=gruvbox"
+  "nvim-colorscheme=gruvbox"
+  "hyprlock-hour-color=689d6a"
+  "hyprlock-minutes-color=d3869b"
+  "hyprlock-battery-color=689d6a"
+  "hyprlock-uptime-color=438488"
+  "text-color=ebdbb2"
+  "dark-bg-color=181818"
+  "bg-color=282828"
+  'rofi-bg-color-tr=hsla(0, 0, 16%, 50%)'
+  "ghostty_theme=GruvboxDark"
+  'qs-bgnd="#282828"'
+  "qs-cpuc=#d3869b"
+  "qs-mmry=#458588"
+  "qs-disk=#689d6a"
+  "qs-wksp=#282828"
+  "qs-idle=#458588"
+  "qs-bglt=#d79921"
+  "qs-wifi=#d65d0e"
+  "qs-dstr=#b8bb26"
+  "qs-name=#ebdbb2"
+  "qs-uptm=#b8bb26"
+  "qs-clck=#ebdbb2"
+  "qs-powr=#d79921"
+  "qs-pfle=#689d6a"
+  "qs-bat1=#b8bb26"
+  "qs-bat2=#689d6a"
+  "qs-bat3=#d79921"
+  "qs-bat4=#fe8019"
+  "qs-bat5=#cc241d"
+  "qs-txt1=#ebdbb2"
+  "qs-txt2=#aaaaaa"
+)
+
+black_vars=(
+  "starship-palette=mavenblack"
+  "nvim-colorscheme=gruvbox"
+  "hyprlock-hour-color=59cd90"
+  "hyprlock-minutes-color=ba8baf"
+  "hyprlock-battery-color=7cafc2"
+  "hyprlock-uptime-color=a1b56c"
+  "text-color=eeeeee"
+  "dark-bg-color=000000"
+  "bg-color=141414"
+  'rofi-bg-color-tr=hsla(0, 0, 0%, 50%)'
+  "ghostty_theme=MavenBlack"
+  'qs-bgnd="#141414"'
+  "qs-cpuc=#ba8baf"
+  "qs-mmry=#59cd90"
+  "qs-disk=#7cafc2"
+  "qs-wksp=#eeeeee"
+  "qs-idle=#ba8baf"
+  "qs-bglt=#eeeeee"
+  "qs-wifi=#f7ca88"
+  "qs-dstr=#7cafc2"
+  "qs-name=#eeeeee"
+  "qs-uptm=#a1b56c"
+  "qs-clck=#eeeeee"
+  "qs-powr=#f7ca88"
+  "qs-pfle=#59cd90"
+  "qs-bat1=#a1b56c"
+  "qs-bat2=#59cd90"
+  "qs-bat3=#7cafc2"
+  "qs-bat4=#f7ca88"
+  "qs-bat5=#ab4642"
+  "qs-txt1=#eeeeee"
+  "qs-txt2=#aaaaaa"
+)
+
+declare -A cpcn_variants=(
+  [teal]="Catppuccin-Teal-Dark|teal|Adwaita-Teal|94e2d5|teal"
+  [purple]="Catppuccin-Purple-Dark|purple|Cpcn-Purple|cba6f7|mauve"
+  [dark]="Catppuccin-Purple-Dark|purple|Cpcn-Purple|090912|mauve"
+  [red]="Catppuccin-Red-Dark|red|Adwaita-Red|f38ba8|red"
+  [green]="Catppuccin-Green-Dark|green|Adwaita-Green|a6e3a1|green"
+  [orange]="Catppuccin-Orange-Dark|orange|Adwaita-Orange|fab387|peach"
+)
+
+declare -A gruv_variants=(
+  [purple]="Gruvbox-Pink-Dark|purple|gruvbox_dark|d3869b|purple"
+  [pink]="Gruvbox-Pink-Dark|purple|gruvbox_dark|b16286|purple"
+  [aqua]="Gruvbox-Teal-Dark|teal|gruvbox_dark|689d6a|aqua"
+  [orange]="Gruvbox-Orange-Dark|orange|gruvbox_dark|fe8019|orange"
+  [green]="Gruvbox-Green-Dark|green|gruvbox_dark|b8bb26|green"
+  [blue]="Gruvbox-Dark|blue|gruvbox_dark|458588|blue"
+  [red]="Gruvbox-Red-Dark|red|gruvbox_dark|cc241d|red"
+  [yellow]="Gruvbox-Yellow-Dark|yellow|gruvbox_dark|d79921|yellow"
+)
+
+case "$1" in
 cpcn)
-  colorctl vars +bg-color=181824
-  colorctl vars "+rofi-bg-color-tr=hsla(240, 21%, 12%, 50%)"
-  colorctl vars +starship-palette=catppuccin
-  colorctl vars +nvim-colorscheme=catppuccin
-  colorctl vars +hyprlock-hour-color=94e2d5
-  colorctl vars +hyprlock-minutes-color=cba6f7
-  colorctl vars +hyprlock-battery-color=94e2d5
-  colorctl vars +hyprlock-uptime-color=74c7ec
-  colorctl vars +text-color=cdd6f4
-  colorctl vars +dark-bg-color=11111b
-  colorctl vars +bg-color=181825
-  colorctl vars +ghostty_theme=CatppuccinMocha
-
-  # colorctl vars +qs-bgnd="Qt.rgba(0.094, 0.094, 0.145, 0.8)"
-  colorctl vars +qs-bgnd="\"#181825\""
-  colorctl vars +qs-cpuc="#cba6f7"
-  colorctl vars +qs-mmry="#89b4fa"
-  colorctl vars +qs-disk="#94e2d5"
-  colorctl vars +qs-wksp="#181825"
-  colorctl vars +qs-idle="#89b4fa"
-  colorctl vars +qs-bglt="#f9e2af"
-  colorctl vars +qs-wifi="#fab387"
-  colorctl vars +qs-dstr="#a6e3a1"
-  colorctl vars +qs-name="#a6e3a1"
-  colorctl vars +qs-uptm="#a6e3a1"
-  colorctl vars +qs-clck="#cdd6f4"
-  colorctl vars +qs-txt1="#cdd6f4"
-  colorctl vars +qs-txt2="#a6adc8"
-  colorctl vars +qs-powr="#f9e2af"
-  colorctl vars +qs-pfle="#94e2d5"
-  colorctl vars +qs-bat1="#a6e3a1"
-  colorctl vars +qs-bat2="#94e2d5"
-  colorctl vars +qs-bat3="#f9e2af"
-  colorctl vars +qs-bat4="#fab387"
-  colorctl vars +qs-bat5="#f38ba8"
-
+  apply_vars "${cpcn_vars[@]}"
   cp /mnt/DATA/Pictures/Wallpapers/cpcn.png /mnt/DATA/Pictures/CURRENT
   ln ~/.config/waybar/colors/catppuccin-mocha.css ~/.config/waybar/colors.css -sf
-
-  if [[ $2 == teal ]]; then
-    set_theme Catppuccin-Teal-Dark teal Adwaita-Teal 94e2d5 teal
-  elif [[ $2 == purple ]]; then
-    set_theme Catppuccin-Purple-Dark purple Cpcn-Purple cba6f7 mauve
-   elif [[ $2 == dark ]]; then
-    set_theme Catppuccin-Purple-Dark purple Cpcn-Purple 090912 mauve
-  elif [[ $2 == red ]]; then
-    set_theme Catppuccin-Red-Dark red Adwaita-Red f38ba8 red
-  elif [[ $2 == green ]]; then
-    set_theme Catppuccin-Green-Dark green Adwaita-Green a6e3a1 green
-  elif [[ $2 == orange ]]; then
-    set_theme Catppuccin-Orange-Dark orange Adwaita-Orange fab387 peach
-  else
-    echo "Not a valid vairant: {teal|purple|red|green|orange}"
-  fi
+  apply_variant cpcn_variants "$2"
   ;;
 gruv)
-  colorctl vars +starship-palette=gruvbox
-  colorctl vars +nvim-colorscheme=gruvbox
-  colorctl vars +hyprlock-hour-color=689d6a
-  colorctl vars +hyprlock-minutes-color=d3869b
-  colorctl vars +hyprlock-battery-color=689d6a
-  colorctl vars +hyprlock-uptime-color=438488
-  colorctl vars +text-color=ebdbb2
-  colorctl vars +dark-bg-color=181818
-  colorctl vars +bg-color=282828
-  colorctl vars "+rofi-bg-color-tr=hsla(0, 0, 16%, 50%)"
-  colorctl vars +ghostty_theme=GruvboxDark
-
-  # colorctl vars +qs-bgnd="Qt.rgba(0.16, 0.16, 0.16, 0.8)"
-  colorctl vars +qs-bgnd="\"#282828\""
-  colorctl vars +qs-cpuc="#d3869b"
-  colorctl vars +qs-mmry="#458588"
-  colorctl vars +qs-disk="#689d6a"
-  colorctl vars +qs-wksp="#282828"
-  colorctl vars +qs-idle="#458588"
-  colorctl vars +qs-bglt="#d79921"
-  colorctl vars +qs-wifi="#d65d0e"
-  colorctl vars +qs-dstr="#b8bb26"
-  colorctl vars +qs-name="#ebdbb2"
-  colorctl vars +qs-uptm="#b8bb26"
-  colorctl vars +qs-clck="#ebdbb2"
-  colorctl vars +qs-powr="#d79921"
-  colorctl vars +qs-pfle="#689d6a"
-  colorctl vars +qs-bat1="#b8bb26"
-  colorctl vars +qs-bat2="#689d6a"
-  colorctl vars +qs-bat3="#d79921"
-  colorctl vars +qs-bat4="#fe8019"
-  colorctl vars +qs-bat5="#cc241d"
-  colorctl vars +qs-txt1="#ebdbb2"
-  colorctl vars +qs-txt2="#aaaaaa"
-
+  apply_vars "${gruv_vars[@]}"
   cp /mnt/DATA/Pictures/Wallpapers/gruv.png /mnt/DATA/Pictures/CURRENT
   ln ~/.config/waybar/colors/gruvbox.css ~/.config/waybar/colors.css -sf
-
-  [[ $2 == purple ]] &&
-    set_theme Gruvbox-Pink-Dark purple gruvbox_dark d3869b purple ||
-    [[ $2 == pink ]] &&
-    set_theme Gruvbox-Pink-Dark purple gruvbox_dark b16286 purple ||
-    [[ $2 == aqua ]] &&
-    set_theme Gruvbox-Teal-Dark teal gruvbox_dark 689d6a aqua ||
-    [[ $2 == orange ]] &&
-    set_theme Gruvbox-Orange-Dark orange gruvbox_dark fe8019 orange ||
-    [[ $2 == green ]] &&
-    set_theme Gruvbox-Green-Dark green gruvbox_dark b8bb26 green ||
-    [[ $2 == blue ]] &&
-    set_theme Gruvbox-Dark blue gruvbox_dark 458588 blue ||
-    [[ $2 == red ]] &&
-    set_theme Gruvbox-Red-Dark red gruvbox_dark cc241d red ||
-    [[ $2 == yellow ]] &&
-    set_theme Gruvbox-Yellow-Dark yellow gruvbox_dark d79921 yellow ||
-    echo "Not a valid vairant: {aqua|blue|green|orange|pink|purple|red|yellow}"
+  apply_variant gruv_variants "$2"
   ;;
 black)
-
-  colorctl vars +starship-palette=mavenblack
-  colorctl vars +nvim-colorscheme=gruvbox
-  colorctl vars +hyprlock-hour-color=59cd90
-  colorctl vars +hyprlock-minutes-color=ba8baf
-  colorctl vars +hyprlock-battery-color=7cafc2
-  colorctl vars +hyprlock-uptime-color=a1b56c
-  colorctl vars +text-color=eeeeee
-  colorctl vars +dark-bg-color=000000
-  colorctl vars +bg-color=141414
-  colorctl vars "+rofi-bg-color-tr=hsla(0, 0, 0%, 50%)"
-  colorctl vars +ghostty_theme=MavenBlack
-
-  # colorctl vars +qs-bgnd="Qt.rgba(0.16, 0.16, 0.16, 0.8)"
-  colorctl vars +qs-bgnd="\"#141414\""
-  colorctl vars +qs-cpuc="#ba8baf"
-  colorctl vars +qs-mmry="#59cd90"
-  colorctl vars +qs-disk="#7cafc2"
-  colorctl vars +qs-wksp="#eeeeee"
-  colorctl vars +qs-idle="#ba8baf"
-  colorctl vars +qs-bglt="#eeeeee"
-  colorctl vars +qs-wifi="#f7ca88"
-  colorctl vars +qs-dstr="#7cafc2"
-  colorctl vars +qs-name="#eeeeee"
-  colorctl vars +qs-uptm="#a1b56c"
-  colorctl vars +qs-clck="#eeeeee"
-  colorctl vars +qs-powr="#f7ca88"
-  colorctl vars +qs-pfle="#59cd90"
-  colorctl vars +qs-bat1="#a1b56c"
-  colorctl vars +qs-bat2="#59cd90"
-  colorctl vars +qs-bat3="#7cafc2"
-  colorctl vars +qs-bat4="#f7ca88"
-  colorctl vars +qs-bat5="#ab4642"
-  colorctl vars +qs-txt1="#eeeeee"
-  colorctl vars +qs-txt2="#aaaaaa"
-
+  apply_vars "${black_vars[@]}"
   cp /mnt/DATA/Pictures/Wallpapers/black.png /mnt/DATA/Pictures/CURRENT
   ln ~/.config/waybar/colors/gruvbox.css ~/.config/waybar/colors.css -sf
-
-  set_theme Gruvbox-Teal-Dark blue Cosmic 141414 blue #59cd90 blue
+  set_theme "Gruvbox-Teal-Dark" "blue" "Cosmic" "141414" "blue"
   ;;
 *)
-  echo "Usage: accent {cpcn|gruv}"
+  echo "Usage: accent {cpcn|gruv|black}"
   exit 1
   ;;
 esac
