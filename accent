@@ -21,7 +21,7 @@ set_theme() {
   colorctl apply >/dev/null
 
   echo "Overriding flatpak themes (need sudo)"
-  sudo flatpak override --env=GTK_THEME=$1
+  sudo flatpak override --env=GTK_THEME="$1"
   exit 0
 }
 
@@ -71,6 +71,8 @@ cpcn)
     set_theme Catppuccin-Teal-Dark teal Adwaita-Teal 94e2d5 teal
   elif [[ $2 == purple ]]; then
     set_theme Catppuccin-Purple-Dark purple Cpcn-Purple cba6f7 mauve
+   elif [[ $2 == dark ]]; then
+    set_theme Catppuccin-Purple-Dark purple Cpcn-Purple 090912 mauve
   elif [[ $2 == red ]]; then
     set_theme Catppuccin-Red-Dark red Adwaita-Red f38ba8 red
   elif [[ $2 == green ]]; then

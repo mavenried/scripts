@@ -6,7 +6,7 @@ import os
 pg.init()
 screen = pg.display.set_mode((1920, 1080), pg.FULLSCREEN)
 pg.display.set_caption("Reader")
-icon = pg.image.load("/home/maverikio/Pictures/GameIcons/Reader.png")
+icon = pg.image.load(os.path.expanduser("~/Pictures/GameIcons/Reader.png"))
 
 pg.display.set_icon(icon)
 MAXLEN = 95
@@ -24,13 +24,16 @@ def init(file):
         if (len(line)) > MAXLEN:
             new_lines = [line]
             while len(new_lines[-1]) > MAXLEN:
-                i = MAXLEN
                 l = new_lines[-1]
-                while l[i] != " ":
-                    i -= 1
+                i = l.rfind(" ", 0, MAXLEN + 1)
                 new_lines.pop()
-                new_lines.append(l[:i])
-                new_lines.append(l[i + 1 :])
+                if i == -1:
+                    # no space to break on, hard-wrap at MAXLEN
+                    new_lines.append(l[:MAXLEN])
+                    new_lines.append(l[MAXLEN:])
+                else:
+                    new_lines.append(l[:i])
+                    new_lines.append(l[i + 1 :])
             lines.extend(new_lines)
         else:
             lines.append(line)
@@ -72,8 +75,12 @@ def init(file):
         pg.display.flip()
 
 
+BOOKMARK = os.path.expanduser("~/.bookmarks/shadowslave")
+
+
 def update(chno):
-    with open("/home/maverikio/.bookmarks/shadowslave", "w") as f:
+    os.makedirs(os.path.dirname(BOOKMARK), exist_ok=True)
+    with open(BOOKMARK, "w") as f:
         f.write(str(chno))
 
 
@@ -86,7 +93,7 @@ if __name__ == "__main__":
             chno += 1
             update(chno)
     else:
-        with open("/home/maverikio/.bookmarks/shadowslave") as f:
+        with open(BOOKMARK) as f:
             chno = int(f.read().strip())
         while True:
             init(os.getcwd() + f"/{chno:0>5}.txt")

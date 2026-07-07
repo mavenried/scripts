@@ -10,7 +10,7 @@ fi
 INPUT="$1"
 OUTPUT="${2:-${INPUT%.mp4}.gif}"
 FPS="${3:-10}"
-WIDTH=1920
+WIDTH="${4:-1920}"
 PALETTE="/tmp/palette.png"
 
 echo "Converting $INPUT to $OUTPUT..."

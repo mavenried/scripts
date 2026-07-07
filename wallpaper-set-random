@@ -1,0 +1,25 @@
+#!/bin/sh
+
+CURRENT=/mnt/DATA/Pictures/CURRENT
+WALLPAPER_QUEUE=/mnt/DATA/Pictures/WallpaperQueue/
+LOCK="$HOME/.cache/wallpaper-set-random.lock"
+
+if [ -e "$LOCK" ]; then
+  notify-send "MavenCore" "Found lockfile" -i ~/Pictures/AVATAR
+  exit
+fi
+
+notify-send "MavenCore" "Changing Wallpaper..." -i ~/Pictures/AVATAR
+touch "$LOCK"
+
+NEW="$WALLPAPER_QUEUE$(ls "$WALLPAPER_QUEUE" | sort -R | tail -1)"
+cp "$NEW" "$CURRENT"
+
+pidof swww-daemon >/dev/null || swww-daemon &
+swww img "$CURRENT"
+
+magick "$CURRENT" -scale 20% -blur 0x2.5 -scale 500% -colorize 50% -fill black ~/Pictures/C
+mv ~/Pictures/C ~/Pictures/CURRENT_BLUR
+
+rm "$LOCK"
+notify-send "MavenCore" "Done." -i ~/Pictures/AVATAR
