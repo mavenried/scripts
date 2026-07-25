@@ -3,7 +3,7 @@
 SOCKET="$2"
 MSG="$1"
 
-[ -z "$MSG" ] && [ -z "$SOCKET" ] && {
+{ [ -z "$MSG" ] || [ -z "$SOCKET" ]; } && {
   echo "usage: $0 <message> <sock_path>">&2
   exit 1
 }

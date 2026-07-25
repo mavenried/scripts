@@ -38,8 +38,8 @@ async def main():
 
             if win_id is None:
                 name = "desktop"
-            else: 
-                name = windows[int(win_id)]
+            else:
+                name = windows.get(int(win_id), "unknown")
 
             display(name)
 

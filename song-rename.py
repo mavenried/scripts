@@ -29,7 +29,7 @@ def main():
             print(f"Skipping {file_path}: missing metadata")
             continue
 
-        artists = [a.strip() for a in artist_str.split('/')]  # some tags use ; as separator
+        artists = [a.strip() for a in re.split(r'[/;]', artist_str)]
         new_name = f"{', '.join(artists)} - {title}.mp3"
         new_name = clean_filename(new_name)
 

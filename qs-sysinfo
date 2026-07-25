@@ -4,11 +4,14 @@ fmt() {
   printf "%s%3d%s" "$1" "$2" "$3"
 }
 
-# Sleep so it doesnt execute like a million times a second
+# CPU usage: sample /proc/stat, sleep (also throttles repeated invocations), sample again, diff
+read -r _ u1 n1 s1 i1 _ < /proc/stat
 sleep 1
+read -r _ u2 n2 s2 i2 _ < /proc/stat
 
-# CPU usage
-cpu=$(awk -v RS="" '{u=$2+$4; t=$2+$4+$5; printf "%.0f", u/t*100}' /proc/stat)
+cpu=$(awk -v b1="$((u1 + s1))" -v t1="$((u1 + s1 + i1))" \
+         -v b2="$((u2 + s2))" -v t2="$((u2 + s2 + i2))" \
+     'BEGIN { db = b2 - b1; dt = t2 - t1; if (dt > 0) printf "%.0f", db / dt * 100; else print 0 }')
 
 # RAM usage
 ram=$(free | awk '/Mem:/ {printf "%.0f", $3/$2*100}')

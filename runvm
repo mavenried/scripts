@@ -1,0 +1,184 @@
+#!/bin/bash
+#
+# runvm - quickly boot a qcow2 disk image with QEMU/KVM
+set -euo pipefail
+
+# ---------------------------------------------------------------------------
+# Colors
+# ---------------------------------------------------------------------------
+if [[ -t 1 ]] && [[ -z "${NO_COLOR:-}" ]]; then
+    C_RESET=$'\033[0m'
+    C_BOLD=$'\033[1m'
+    C_DIM=$'\033[2m'
+    C_RED=$'\033[31m'
+    C_GREEN=$'\033[32m'
+    C_YELLOW=$'\033[33m'
+    C_BLUE=$'\033[34m'
+    C_CYAN=$'\033[36m'
+else
+    C_RESET=""; C_BOLD=""; C_DIM=""; C_RED=""; C_GREEN=""; C_YELLOW=""; C_BLUE=""; C_CYAN=""
+fi
+
+info()    { printf '%s::%s %s\n' "$C_BLUE$C_BOLD" "$C_RESET" "$1"; }
+success() { printf '%s✓%s %s\n' "$C_GREEN$C_BOLD" "$C_RESET" "$1"; }
+warn()    { printf '%s!%s %s\n' "$C_YELLOW$C_BOLD" "$C_RESET" "$1"; }
+die()     { printf '%s✗ error:%s %s\n' "$C_RED$C_BOLD" "$C_RESET" "$1" >&2; exit 1; }
+
+# ---------------------------------------------------------------------------
+# Defaults
+# ---------------------------------------------------------------------------
+DISK_IMG=""
+ISO_IMG=""
+MEMORY="4G"
+CPUS="4"
+SHARE_DIR="$HOME/.config/nixos"
+USE_KVM=1
+DRY_RUN=0
+
+usage() {
+    cat <<EOF
+${C_BOLD}runvm${C_RESET} - boot a qcow2 disk image with QEMU
+
+${C_BOLD}Usage:${C_RESET}
+  runvm [options] [disk.qcow2]
+
+${C_BOLD}Options:${C_RESET}
+  -m, --mem <size>       Memory to allocate (default: ${MEMORY})
+  -c, --cpus <n>         Number of vCPUs (default: ${CPUS})
+  -i, --iso <path>       Attach an ISO image as a CD-ROM drive
+      --share <dir|none> Host directory shared via 9p (default: ${SHARE_DIR})
+                         Pass 'none' to disable sharing entirely.
+      --no-kvm           Disable KVM acceleration (software emulation)
+  -n, --dry-run          Print the qemu command instead of running it
+  -h, --help             Show this help message
+
+${C_BOLD}Notes:${C_RESET}
+  If no disk image is given, the first *.qcow2 file in the
+  current directory is used (you'll be prompted if there are
+  several). The shared directory is mounted inside the guest
+  with mount tag 'nixos'.
+EOF
+}
+
+# ---------------------------------------------------------------------------
+# Argument parsing
+# ---------------------------------------------------------------------------
+while [[ $# -gt 0 ]]; do
+    case "$1" in
+        -m|--mem)
+            MEMORY="$2"; shift 2 ;;
+        -c|--cpus)
+            CPUS="$2"; shift 2 ;;
+        -i|--iso)
+            ISO_IMG="$2"; shift 2 ;;
+        --share)
+            SHARE_DIR="$2"; shift 2 ;;
+        --no-kvm)
+            USE_KVM=0; shift ;;
+        -n|--dry-run)
+            DRY_RUN=1; shift ;;
+        -h|--help)
+            usage; exit 0 ;;
+        -*)
+            die "unknown option: $1 (see --help)" ;;
+        *)
+            DISK_IMG="$1"; shift ;;
+    esac
+done
+
+# ---------------------------------------------------------------------------
+# Dependency checks
+# ---------------------------------------------------------------------------
+command -v qemu-system-x86_64 >/dev/null 2>&1 || die "qemu-system-x86_64 not found in PATH."
+
+if [[ $USE_KVM -eq 1 ]]; then
+    if [[ ! -e /dev/kvm ]]; then
+        warn "/dev/kvm not found, falling back to software emulation."
+        USE_KVM=0
+    elif [[ ! -r /dev/kvm || ! -w /dev/kvm ]]; then
+        warn "/dev/kvm exists but is not read/writable, falling back to software emulation."
+        USE_KVM=0
+    fi
+fi
+
+# ---------------------------------------------------------------------------
+# Disk image discovery
+# ---------------------------------------------------------------------------
+if [[ -z "$DISK_IMG" ]]; then
+    mapfile -t DISKS < <(find . -maxdepth 1 -name "*.qcow2" | sort)
+
+    case "${#DISKS[@]}" in
+        0)
+            die "no .qcow2 file found in the current directory." ;;
+        1)
+            DISK_IMG="${DISKS[0]}" ;;
+        *)
+            info "multiple disk images found, pick one:"
+            select choice in "${DISKS[@]}"; do
+                [[ -n "$choice" ]] && { DISK_IMG="$choice"; break; }
+                warn "invalid choice, try again."
+            done ;;
+    esac
+else
+    [[ -f "$DISK_IMG" ]] || die "disk image not found: $DISK_IMG"
+fi
+
+if [[ -n "$ISO_IMG" ]]; then
+    [[ -f "$ISO_IMG" ]] || die "ISO image not found: $ISO_IMG"
+fi
+
+# ---------------------------------------------------------------------------
+# Shared directory setup
+# ---------------------------------------------------------------------------
+if [[ "$SHARE_DIR" != "none" && ! -d "$SHARE_DIR" ]]; then
+    info "creating shared directory at $SHARE_DIR"
+    mkdir -p "$SHARE_DIR"
+fi
+
+# ---------------------------------------------------------------------------
+# Summary
+# ---------------------------------------------------------------------------
+printf '\n%s%s VM configuration %s\n' "$C_BOLD" "$C_CYAN" "$C_RESET"
+printf '  %-10s %s\n' "disk:"   "$DISK_IMG"
+printf '  %-10s %s\n' "memory:" "$MEMORY"
+printf '  %-10s %s\n' "cpus:"   "$CPUS"
+printf '  %-10s %s\n' "kvm:"    "$([[ $USE_KVM -eq 1 ]] && echo "${C_GREEN}enabled${C_RESET}" || echo "${C_YELLOW}disabled${C_RESET}")"
+[[ -n "$ISO_IMG" ]] && printf '  %-10s %s\n' "cdrom:" "$ISO_IMG"
+if [[ "$SHARE_DIR" == "none" ]]; then
+    printf '  %-10s %s\n\n' "share:" "${C_DIM}disabled${C_RESET}"
+else
+    printf '  %-10s %s\n\n' "share:" "$SHARE_DIR -> nixos"
+fi
+
+QEMU_ARGS=(
+    -cpu host
+    -smp "$CPUS"
+    -m "$MEMORY"
+    -drive file="$DISK_IMG",format=qcow2,if=virtio,cache=writeback,aio=threads
+    -vga virtio
+    -display default
+    -net nic,model=virtio -net user
+)
+
+[[ $USE_KVM -eq 1 ]] && QEMU_ARGS=(-enable-kvm "${QEMU_ARGS[@]}")
+[[ -n "$ISO_IMG" ]] && QEMU_ARGS+=(-drive file="$ISO_IMG",media=cdrom)
+if [[ "$SHARE_DIR" != "none" ]]; then
+    QEMU_ARGS+=(
+        -fsdev local,id=nixdir,path="$SHARE_DIR",security_model=none
+        -device virtio-9p-pci,fsdev=nixdir,mount_tag=nixos
+    )
+fi
+
+if [[ $DRY_RUN -eq 1 ]]; then
+    info "dry run, would execute:"
+    printf '%s' "qemu-system-x86_64"
+    printf ' %q' "${QEMU_ARGS[@]}"
+    printf '\n'
+    exit 0
+fi
+
+trap 'warn "VM interrupted."' INT TERM
+
+info "starting VM..."
+qemu-system-x86_64 "${QEMU_ARGS[@]}"
+success "VM shut down cleanly."
