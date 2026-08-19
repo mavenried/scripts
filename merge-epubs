@@ -1,0 +1,334 @@
+#!/usr/bin/env python3
+"""
+Merge multiple EPUB files into a single EPUB.
+
+Each source volume is nested into its own subfolder inside the merged
+OEBPS directory (v01/, v02/, ...) so that files with identical names
+across volumes (cover.jpg, styles.css, section-0001.html, etc.) never
+collide. Internal links inside each volume's HTML/CSS are left
+untouched, since they only need to stay relative *within* that volume's
+own folder tree -- which this approach preserves.
+
+A combined manifest, a single reading-order spine, and a nested
+NCX table of contents (one top-level entry per volume, expandable to
+that volume's own chapters) are generated for the merged book.
+
+Caveat: this assumes each source EPUB uses only paths relative to its
+own OPF file (the normal case for essentially all EPUB2/EPUB3 books).
+EPUBs using absolute/root-relative internal links are not supported.
+
+Usage:
+    python3 merge_epubs.py book1.epub book2.epub book3.epub -o merged.epub
+    python3 merge_epubs.py --dir /path/to/epubs -o merged.epub
+    python3 merge_epubs.py --dir . -o merged.epub --title "My Series" --author "Author Name"
+
+Dependencies: none beyond the Python 3 standard library.
+"""
+
+import argparse
+import glob
+import os
+import re
+import shutil
+import sys
+import tempfile
+import uuid
+import xml.etree.ElementTree as ET
+import zipfile
+
+OPF_NS = "http://www.idpf.org/2007/opf"
+DC_NS = "http://purl.org/dc/elements/1.1/"
+NCX_NS = "http://www.daisy.org/z3986/2005/ncx/"
+CONT_NS = "urn:oasis:names:tc:opendocument:xmlns:container"
+
+ET.register_namespace("", OPF_NS)
+ET.register_namespace("dc", DC_NS)
+
+
+def q(ns, tag):
+    return f"{{{ns}}}{tag}"
+
+
+def natural_sort_key(path):
+    """Sort by any number found in the filename (vol/volume/book/part/chNN...),
+    falling back to plain filename order."""
+    name = os.path.basename(path)
+    m = re.search(r"(\d+)", name)
+    num = int(m.group(1)) if m else 0
+    return (num, name.lower())
+
+
+def strip_volume_suffix(title):
+    """Try to recover a series title by stripping a trailing 'Vol. N' / 'Volume N' marker."""
+    return re.sub(
+        r"[:\-–—,]?\s*(vol(ume)?\.?|book|part)\s*\.?\s*\d+\s*$",
+        "",
+        title,
+        flags=re.IGNORECASE,
+    ).strip()
+
+
+def parse_volume(epub_path, extract_root, index):
+    """Extract one epub and return its parsed manifest/spine/ncx/metadata info."""
+    prefix = f"v{index:02d}"
+    extract_dir = os.path.join(extract_root, prefix)
+    os.makedirs(extract_dir)
+    with zipfile.ZipFile(epub_path) as z:
+        z.extractall(extract_dir)
+
+    container = ET.parse(os.path.join(extract_dir, "META-INF", "container.xml"))
+    rootfile = container.find(f".//{{{CONT_NS}}}rootfile").get("full-path")
+    opf_path = os.path.join(extract_dir, rootfile)
+    opf_dir = os.path.dirname(opf_path)
+
+    opf = ET.parse(opf_path)
+    root = opf.getroot()
+    metadata = root.find(q(OPF_NS, "metadata"))
+    manifest_el = root.find(q(OPF_NS, "manifest"))
+    spine_el = root.find(q(OPF_NS, "spine"))
+
+    title_el = metadata.find(q(DC_NS, "title"))
+    title = title_el.text.strip() if title_el is not None and title_el.text else os.path.splitext(os.path.basename(epub_path))[0]
+
+    creator_el = metadata.find(q(DC_NS, "creator"))
+    author = creator_el.text.strip() if creator_el is not None and creator_el.text else None
+
+    id_to_item = {}
+    local_cover_id = None
+    ncx_href = None
+    for item in manifest_el.findall(q(OPF_NS, "item")):
+        iid = item.get("id")
+        href = item.get("href")
+        mtype = item.get("media-type")
+        props = item.get("properties") or ""
+        id_to_item[iid] = (href, mtype)
+        if mtype == "application/x-dtbncx+xml":
+            ncx_href = href
+        if iid == "cover" or "cover-image" in props:
+            local_cover_id = iid
+
+    spine_idrefs = [ir.get("idref") for ir in spine_el.findall(q(OPF_NS, "itemref"))]
+
+    nav_points = []
+    if ncx_href:
+        ncx_path = os.path.join(opf_dir, ncx_href)
+        if os.path.exists(ncx_path):
+            ncx_tree = ET.parse(ncx_path)
+            navmap = ncx_tree.getroot().find(q(NCX_NS, "navMap"))
+            if navmap is not None:
+                def prefix_srcs(el):
+                    for content in el.findall(q(NCX_NS, "content")):
+                        src = content.get("src")
+                        if src:
+                            content.set("src", f"{prefix}/{src}")
+                    for child in el.findall(q(NCX_NS, "navPoint")):
+                        prefix_srcs(child)
+
+                for np in navmap.findall(q(NCX_NS, "navPoint")):
+                    prefix_srcs(np)
+                    nav_points.append(np)
+
+    return {
+        "prefix": prefix,
+        "opf_dir": opf_dir,
+        "title": title,
+        "author": author,
+        "id_to_item": id_to_item,
+        "local_cover_id": local_cover_id,
+        "ncx_href": ncx_href,
+        "spine_idrefs": spine_idrefs,
+        "nav_points": nav_points,
+    }
+
+
+def build_merged_epub(epub_paths, out_path, title=None, author=None):
+    with tempfile.TemporaryDirectory(prefix="merge_epubs_") as work:
+        extract_root = os.path.join(work, "extract")
+        build_dir = os.path.join(work, "build")
+        oebps_dir = os.path.join(build_dir, "OEBPS")
+        os.makedirs(extract_root)
+        os.makedirs(oebps_dir)
+
+        merged_manifest = []
+        merged_spine = []
+        nav_sections = []
+        cover_id = None
+        first_title = None
+        first_author = None
+
+        for i, epub_path in enumerate(epub_paths, start=1):
+            vol = parse_volume(epub_path, extract_root, i)
+            prefix = vol["prefix"]
+
+            if first_title is None:
+                first_title = vol["title"]
+            if first_author is None and vol["author"]:
+                first_author = vol["author"]
+
+            dest_dir = os.path.join(oebps_dir, prefix)
+            shutil.copytree(vol["opf_dir"], dest_dir)
+            # drop this volume's own opf/ncx from the copy; we build merged ones
+            for fname in os.listdir(dest_dir):
+                if fname.endswith(".opf"):
+                    os.remove(os.path.join(dest_dir, fname))
+            if vol["ncx_href"]:
+                ncx_full = os.path.join(dest_dir, vol["ncx_href"])
+                if os.path.exists(ncx_full):
+                    os.remove(ncx_full)
+
+            for iid, (href, mtype) in vol["id_to_item"].items():
+                if mtype == "application/x-dtbncx+xml":
+                    continue
+                new_id = f"{prefix}_{iid}"
+                merged_manifest.append({"id": new_id, "href": f"{prefix}/{href}", "media_type": mtype})
+                if iid == vol["local_cover_id"] and cover_id is None:
+                    cover_id = new_id
+
+            for idref in vol["spine_idrefs"]:
+                merged_spine.append(f"{prefix}_{idref}")
+
+            nav_sections.append((vol["title"], vol["nav_points"], prefix))
+            print(f"  merged {prefix}: {vol['title']!r} "
+                  f"({len(vol['id_to_item'])} files, {len(vol['spine_idrefs'])} spine items)")
+
+        merged_title = title or strip_volume_suffix(first_title) or "Merged Book"
+        merged_author = author or first_author or "Unknown"
+        book_id = f"urn:uuid:{uuid.uuid4()}"
+
+        # ---- content.opf ----
+        pkg = ET.Element(q(OPF_NS, "package"), {"version": "2.0", "unique-identifier": "BookId"})
+        md = ET.SubElement(pkg, q(OPF_NS, "metadata"))
+        md.set("xmlns:dc", DC_NS)
+        md.set("xmlns:opf", OPF_NS)
+        ET.SubElement(md, q(DC_NS, "title")).text = merged_title
+        c = ET.SubElement(md, q(DC_NS, "creator"))
+        c.text = merged_author
+        c.set(q(OPF_NS, "role"), "aut")
+        ET.SubElement(md, q(DC_NS, "language")).text = "en"
+        ident = ET.SubElement(md, q(DC_NS, "identifier"))
+        ident.text = book_id
+        ident.set("id", "BookId")
+        if cover_id:
+            meta_cover = ET.SubElement(md, "meta")
+            meta_cover.set("name", "cover")
+            meta_cover.set("content", cover_id)
+
+        manifest_el = ET.SubElement(pkg, q(OPF_NS, "manifest"))
+        ncx_item_el = ET.SubElement(manifest_el, q(OPF_NS, "item"))
+        ncx_item_el.set("id", "ncx")
+        ncx_item_el.set("href", "toc.ncx")
+        ncx_item_el.set("media-type", "application/x-dtbncx+xml")
+        for item in merged_manifest:
+            el = ET.SubElement(manifest_el, q(OPF_NS, "item"))
+            el.set("id", item["id"])
+            el.set("href", item["href"])
+            el.set("media-type", item["media_type"])
+
+        spine_el = ET.SubElement(pkg, q(OPF_NS, "spine"))
+        spine_el.set("toc", "ncx")
+        for idref in merged_spine:
+            ET.SubElement(spine_el, q(OPF_NS, "itemref")).set("idref", idref)
+
+        ET.ElementTree(pkg).write(os.path.join(oebps_dir, "content.opf"), encoding="utf-8", xml_declaration=True)
+
+        # ---- toc.ncx ----
+        ncx_root = ET.Element(q(NCX_NS, "ncx"), {"version": "2005-1", "xml:lang": "en"})
+        head = ET.SubElement(ncx_root, q(NCX_NS, "head"))
+        ET.SubElement(head, q(NCX_NS, "meta"), {"name": "dtb:uid", "content": book_id})
+        ET.SubElement(head, q(NCX_NS, "meta"), {"name": "dtb:depth", "content": "2"})
+        ET.SubElement(head, q(NCX_NS, "meta"), {"name": "dtb:totalPageCount", "content": "0"})
+        ET.SubElement(head, q(NCX_NS, "meta"), {"name": "dtb:maxPageNumber", "content": "0"})
+        doctitle = ET.SubElement(ncx_root, q(NCX_NS, "docTitle"))
+        ET.SubElement(doctitle, q(NCX_NS, "text")).text = merged_title
+        navmap_el = ET.SubElement(ncx_root, q(NCX_NS, "navMap"))
+
+        order = [0]
+
+        def renumber(el):
+            for child in list(el):
+                if child.tag == q(NCX_NS, "navPoint"):
+                    order[0] += 1
+                    child.set("playOrder", str(order[0]))
+                    child.set("id", f"np-{order[0]}")
+                    renumber(child)
+
+        for vol_title, vol_nps, prefix in nav_sections:
+            vol_np = ET.SubElement(navmap_el, q(NCX_NS, "navPoint"))
+            order[0] += 1
+            vol_np.set("id", f"np-{order[0]}")
+            vol_np.set("playOrder", str(order[0]))
+            label = ET.SubElement(vol_np, q(NCX_NS, "navLabel"))
+            ET.SubElement(label, q(NCX_NS, "text")).text = vol_title
+            first_src = None
+            if vol_nps:
+                first_content = vol_nps[0].find(q(NCX_NS, "content"))
+                if first_content is not None:
+                    first_src = first_content.get("src")
+            ET.SubElement(vol_np, q(NCX_NS, "content"), {"src": first_src or f"{prefix}/"})
+            for np in vol_nps:
+                vol_np.append(np)
+            renumber(vol_np)
+
+        ET.ElementTree(ncx_root).write(os.path.join(oebps_dir, "toc.ncx"), encoding="utf-8", xml_declaration=True)
+
+        # ---- container.xml + mimetype ----
+        meta_inf = os.path.join(build_dir, "META-INF")
+        os.makedirs(meta_inf)
+        with open(os.path.join(meta_inf, "container.xml"), "w", encoding="utf-8") as f:
+            f.write(
+                '<?xml version="1.0" encoding="UTF-8"?>\n'
+                '<container version="1.0" xmlns="urn:oasis:names:tc:opendocument:xmlns:container">\n'
+                "    <rootfiles>\n"
+                '        <rootfile full-path="OEBPS/content.opf" media-type="application/oebps-package+xml"/>\n'
+                "   </rootfiles>\n"
+                "</container>\n"
+            )
+        with open(os.path.join(build_dir, "mimetype"), "w", encoding="utf-8") as f:
+            f.write("application/epub+zip")
+
+        # ---- zip ----
+        if os.path.exists(out_path):
+            os.remove(out_path)
+        with zipfile.ZipFile(out_path, "w") as zf:
+            zf.write(os.path.join(build_dir, "mimetype"), "mimetype", compress_type=zipfile.ZIP_STORED)
+            for dirpath, _, filenames in os.walk(build_dir):
+                for fn in filenames:
+                    full = os.path.join(dirpath, fn)
+                    rel = os.path.relpath(full, build_dir)
+                    if rel == "mimetype":
+                        continue
+                    zf.write(full, rel, compress_type=zipfile.ZIP_DEFLATED)
+
+        print(f"\nWrote merged epub: {out_path}")
+        print(f"Title: {merged_title!r}  Author: {merged_author!r}")
+        print(f"Total spine items: {len(merged_spine)}, total manifest items: {len(merged_manifest) + 1}")
+
+
+def main():
+    ap = argparse.ArgumentParser(description="Merge multiple EPUB files into one.")
+    ap.add_argument("epubs", nargs="*", help="EPUB files to merge, in the order they should appear")
+    ap.add_argument("--dir", help="Instead of listing files, merge all *.epub in this directory (naturally sorted by number in filename)")
+    ap.add_argument("-o", "--output", required=True, help="Output .epub path")
+    ap.add_argument("--title", help="Title for the merged book (default: derived from the first volume)")
+    ap.add_argument("--author", help="Author for the merged book (default: taken from the first volume)")
+    args = ap.parse_args()
+
+    if args.dir:
+        epub_paths = sorted(glob.glob(os.path.join(args.dir, "*.epub")), key=natural_sort_key)
+    else:
+        epub_paths = args.epubs
+
+    if not epub_paths:
+        ap.error("No input EPUBs given. Pass files directly or use --dir.")
+    if len(epub_paths) < 2:
+        ap.error("Need at least 2 EPUBs to merge.")
+
+    print(f"Merging {len(epub_paths)} epubs:")
+    for p in epub_paths:
+        print(f"  {os.path.basename(p)}")
+
+    build_merged_epub(epub_paths, args.output, title=args.title, author=args.author)
+
+
+if __name__ == "__main__":
+    main()

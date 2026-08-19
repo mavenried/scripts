@@ -1,0 +1,60 @@
+#!/usr/bin/env python3
+import os
+import sys
+
+# Map hardcoded paths to their portable counterparts
+SHEBANG_MAP = {
+    b"#!/bin/bash": b"#!/usr/bin/env bash",
+    b"#!/usr/bin/sh": b"#!/usr/bin/env sh",
+    b"#!/bin/sh": b"#!/usr/bin/env sh",
+    b"#!/usr/bin/python": b"#!/usr/bin/env python3",
+    b"#!/usr/bin/python3": b"#!/usr/bin/env python3",
+    b"#!/usr/bin/perl": b"#!/usr/bin/env perl",
+    b"#!/usr/bin/node": b"#!/usr/bin/env node",
+}
+
+def fix_file(filepath):
+    try:
+        with open(filepath, "rb") as f:
+            content = f.read()
+    except Exception:
+        return # Skip unreadable files (e.g. binaries)
+
+    # Check if file starts with any target shebang
+    for old, new in SHEBANG_MAP.items():
+        if content.startswith(old):
+            # Ensure we only replace the exact shebang line prefix
+            new_content = content.replace(old, new, 1)
+            
+            try:
+                with open(filepath, "wb") as f:
+                    f.write(new_content)
+                print(f"[FIXED] {filepath} -> Modified shebang to use 'env'")
+                return
+            except Exception as e:
+                print(f"[ERROR] Could not write to {filepath}: {e}")
+                return
+
+def scan_dir(target_dir):
+    print(f"Scanning directory: {target_dir}...")
+    for root, _, files in os.walk(target_dir):
+        for file in files:
+            filepath = os.path.join(root, file)
+            # Skip hidden files or common build directories
+            if "/." in filepath or "node_modules" in filepath:
+                continue
+            fix_file(filepath)
+
+if __name__ == "__main__":
+    if len(sys.argv) < 2:
+        print("Usage: python3 fix_shebangs.py <directory_path_or_file>")
+        sys.exit(1)
+
+    path = sys.argv[1]
+    if os.path.isdir(path):
+        scan_dir(path)
+    elif os.path.isfile(path):
+        fix_file(path)
+    else:
+        print("Invalid path specified.")
+
