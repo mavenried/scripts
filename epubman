@@ -1,0 +1,326 @@
+#!/usr/bin/env python3
+"""Manage EPUB metadata and contents."""
+
+import argparse
+import os
+import re
+import signal
+import subprocess
+import sys
+import zipfile
+from pathlib import Path
+
+
+class Colors:
+    RESET = "\033[0m"
+    BOLD = "\033[1m"
+    DIM = "\033[2m"
+    CYAN = "\033[36m"
+    BLUE = "\033[34m"
+    GREEN = "\033[32m"
+    YELLOW = "\033[33m"
+    RED = "\033[31m"
+    MAGENTA = "\033[35m"
+
+
+USE_COLOR = sys.stdout.isatty() and "NO_COLOR" not in os.environ
+
+
+def color(text, style):
+    return f"{style}{text}{Colors.RESET}" if USE_COLOR else text
+
+
+def heading(title, subtitle=None):
+    print()
+    print(color(f"== {title} ==", Colors.BOLD + Colors.CYAN))
+    if subtitle:
+        print(color(subtitle, Colors.DIM))
+    print()
+
+
+def status(label, message, style=Colors.GREEN):
+    print(f"{color(f'[{label}]', style)} {message}")
+
+
+DIV_WRAP_RE = re.compile(
+    r"<div\b[^>]*>\s*(<p\b[^>]*>(?:(?!</p>).)*?oceanofpdf(?:(?!</p>).)*?</p>)\s*</div>",
+    re.IGNORECASE | re.DOTALL,
+)
+P_ONLY_RE = re.compile(
+    r"<p\b[^>]*>(?:(?!</p>).)*?oceanofpdf(?:(?!</p>).)*?</p>",
+    re.IGNORECASE | re.DOTALL,
+)
+BARE_LINK_RE = re.compile(
+    r'<a\b[^>]*href="https?://(?:www\.)?oceanofpdf\.com/?"[^>]*>.*?</a>',
+    re.IGNORECASE | re.DOTALL,
+)
+CONTENT_EXTENSIONS = (".html", ".xhtml", ".htm")
+
+
+def clean_html(text):
+    cleaned = DIV_WRAP_RE.sub("", text)
+    cleaned = P_ONLY_RE.sub("", cleaned)
+    cleaned = BARE_LINK_RE.sub("", cleaned)
+    return cleaned, cleaned != text
+
+
+def strip_epub(epub_path, verbose=False, dry_run=False):
+    with zipfile.ZipFile(epub_path, "r") as source:
+        infos = source.infolist()
+        contents = {info.filename: source.read(info.filename) for info in infos}
+        opf_text = "".join(
+            contents[info.filename].decode("utf-8", "ignore").lower()
+            for info in infos
+            if info.filename.lower().endswith(".opf")
+        )
+
+    changed_files = []
+    removed_entries = []
+    new_contents = {}
+    new_infos = []
+
+    for info in infos:
+        name = info.filename
+        data = contents[name]
+        if os.path.basename(name).lower() == "oceanofpdf.com" and "oceanofpdf.com" not in opf_text:
+            removed_entries.append(name)
+            if verbose:
+                print(f"    removed stray entry: {name}")
+            continue
+
+        if name.lower().endswith(CONTENT_EXTENSIONS):
+            text = data.decode("utf-8", "ignore")
+            if "oceanofpdf" in text.lower():
+                data, changed = clean_html(text)
+                if changed:
+                    changed_files.append(name)
+                    data = data.encode("utf-8")
+                    if verbose:
+                        print(f"    cleaned: {name}")
+
+        new_contents[name] = data
+        new_infos.append(info)
+
+    if not changed_files and not removed_entries:
+        return 0, 0, True
+    if dry_run:
+        return len(changed_files), len(removed_entries), True
+
+    temporary = f"{epub_path}.tmp"
+    try:
+        with zipfile.ZipFile(temporary, "w") as destination:
+            for info in new_infos:
+                compression = zipfile.ZIP_STORED if info.filename == "mimetype" else info.compress_type
+                destination.writestr(info, new_contents[info.filename], compress_type=compression)
+
+        valid = True
+        try:
+            with zipfile.ZipFile(temporary) as test_zip:
+                valid = test_zip.testzip() is None and any(
+                    name.lower().endswith(".opf") for name in test_zip.namelist()
+                )
+        except Exception:
+            valid = False
+
+        if valid:
+            os.replace(temporary, epub_path)
+        else:
+            os.remove(temporary)
+            return len(changed_files), len(removed_entries), False
+    except Exception:
+        if os.path.exists(temporary):
+            os.remove(temporary)
+        raise
+
+    return len(changed_files), len(removed_entries), True
+
+
+def collect_strip_targets(paths):
+    if not paths:
+        return sorted(Path.cwd().glob("*.epub"))
+    if len(paths) == 1 and Path(paths[0]).is_dir():
+        return sorted(Path(paths[0]).rglob("*.epub"))
+    return [Path(path) for path in paths]
+
+
+def run_strip(args):
+    targets = collect_strip_targets(args.paths)
+    if not targets:
+        status("INFO", "No .epub files found.", Colors.YELLOW)
+        return 0
+
+    heading("Watermark Stripper", f"{len(targets)} EPUB(s) ready to scan")
+    failed = False
+    for path in targets:
+        if args.verbose:
+            print(color(f"\n{path}", Colors.BOLD + Colors.BLUE))
+        try:
+            content_count, stray_count, valid = strip_epub(path, args.verbose, args.dry_run)
+        except Exception as error:
+            status("FAIL", f"{path}: {error}", Colors.RED)
+            failed = True
+            continue
+        if not valid:
+            status("FAIL", f"{path}: validation failed; left unchanged ({path})", Colors.RED)
+            failed = True
+        elif content_count == 0 and stray_count == 0:
+            status("OK", f"{path}: already clean", Colors.GREEN)
+        else:
+            action = "would clean" if args.dry_run else "cleaned"
+            status(
+                "PLAN" if args.dry_run else "OK",
+                f"{path}: {action} {content_count} content file(s), "
+                f"removed {stray_count} stray entr{'y' if stray_count == 1 else 'ies'}",
+                Colors.YELLOW if args.dry_run else Colors.GREEN,
+            )
+    return 1 if failed else 0
+
+
+def ask(prompt):
+    try:
+        return input(prompt).strip()
+    except EOFError:
+        print()
+        return ""
+
+
+def confirm(prompt):
+    answer = ask(f"{color(prompt, Colors.BOLD)} {color('[y/N]', Colors.DIM)} ")
+    return answer.lower() in {"y", "yes"}
+
+
+def run_series(args):
+    books = sorted(Path.cwd().glob("*.epub"))
+    if not books:
+        status("INFO", "No .epub files found.", Colors.YELLOW)
+        return 0
+
+    heading("Series Editor", f"{len(books)} EPUB(s) in the current directory")
+    series = ""
+    for number, book in enumerate(books, 1):
+        print(color(f"[{number}/{len(books)}] {book.name}", Colors.BOLD + Colors.BLUE))
+        if not (args.persist_series and series):
+            series = ask("Series: ")
+            if not series:
+                status("SKIP", "No series name supplied.", Colors.YELLOW)
+                continue
+        else:
+            print(f"Series: {color(series, Colors.MAGENTA)}")
+
+        index = ask("Index: ")
+        if not index:
+            status("SKIP", "No series index supplied.", Colors.YELLOW)
+            continue
+
+        print(f"\n  {color('Series:', Colors.DIM)} {series}")
+        print(f"  {color('Index: ', Colors.DIM)} {index}")
+        if not confirm(f"Apply changes to {book.name}?"):
+            status("SKIP", f"Left {book.name} unchanged.", Colors.YELLOW)
+            continue
+
+        try:
+            result = subprocess.run(
+                ["ebook-meta", str(book), "--series", series, "--index", index],
+                check=False,
+                stdout=subprocess.DEVNULL,
+                stderr=subprocess.DEVNULL,
+            )
+        except OSError as error:
+            status("FAIL", f"{book.name}: {error}", Colors.RED)
+            continue
+        if result.returncode == 0:
+            status("OK", f"Updated {book.name}.", Colors.GREEN)
+        else:
+            status("FAIL", f"Could not update {book.name}.", Colors.RED)
+    return 0
+
+
+def run_optimize(args):
+    root = Path(args.directory)
+    if not root.is_dir():
+        print(f"{color('[FAIL]', Colors.RED)} Directory does not exist: {root}", file=sys.stderr)
+        return 1
+
+    books = sorted(
+        path for path in root.rglob("*")
+        if path.is_file() and path.suffix.lower() in {".epub", ".epub3"}
+    )
+    if not books:
+        status("INFO", f"No EPUBs found in {root}.", Colors.YELLOW)
+        return 0
+
+    heading("EPUB Optimizer", f"{len(books)} EPUB(s) found in {root}")
+    if args.dry_run:
+        status("PLAN", "Dry run - no files will be modified.", Colors.YELLOW)
+    elif not confirm(f"Polish all {len(books)} EPUBs?"):
+        status("SKIP", "Cancelled.", Colors.YELLOW)
+        return 0
+
+    success = failed = 0
+    for number, book in enumerate(books, 1):
+        relative = str(book.relative_to(root))
+        if args.dry_run:
+            print(f"  {color(f'{number:3d}/{len(books)}', Colors.DIM)}  {relative}")
+            continue
+        if not args.quiet:
+            print(f"  {color(f'{number:3d}/{len(books)}', Colors.DIM)}  {relative} ... ", end="", flush=True)
+        try:
+            result = subprocess.run(
+                ["ebook-polish", "-UdH", str(book)],
+                stdout=subprocess.DEVNULL,
+                stderr=subprocess.DEVNULL,
+                check=False,
+            )
+        except OSError:
+            result = None
+        if result is not None and result.returncode == 0:
+            success += 1
+            if not args.quiet:
+                print(color("OK", Colors.GREEN))
+        else:
+            failed += 1
+            print(color(f"FAILED {relative}", Colors.RED))
+
+    if args.dry_run:
+        status("DONE", f"{len(books)} EPUB(s) would be polished.", Colors.YELLOW)
+    else:
+        print()
+        heading("Optimization Complete")
+        print(f"  {color('Processed:', Colors.DIM)} {len(books)}")
+        print(f"  {color('Succeeded:', Colors.DIM)} {color(str(success), Colors.GREEN)}")
+        print(f"  {color('Failed:   ', Colors.DIM)} {color(str(failed), Colors.RED if failed else Colors.GREEN)}")
+    return 1 if failed else 0
+
+
+def build_parser():
+    parser = argparse.ArgumentParser(prog="epubman", description="Manage EPUB contents and metadata.")
+    subparsers = parser.add_subparsers(dest="command", required=True)
+
+    strip = subparsers.add_parser("strip", help="Strip OceanOfPDF.com watermarks.")
+    strip.add_argument("paths", nargs="*", help="EPUB files or one directory to search recursively.")
+    strip.add_argument("-v", "--verbose", action="store_true")
+    strip.add_argument("--dry-run", action="store_true")
+    strip.set_defaults(function=run_strip)
+
+    series = subparsers.add_parser("series", help="Set series metadata for EPUBs in the current directory.")
+    series.add_argument("-p", "--persist-series", action="store_true")
+    series.set_defaults(function=run_series)
+
+    optimize = subparsers.add_parser("optimize", help="Recursively polish EPUB files.")
+    optimize.add_argument("directory", nargs="?", default=".")
+    optimize.add_argument("-n", "--dry-run", action="store_true")
+    optimize.add_argument("-q", "--quiet", action="store_true")
+    optimize.set_defaults(function=run_optimize)
+    return parser
+
+
+def handle_interrupt(_signum, _frame):
+    print(f"\n{color('[STOP]', Colors.YELLOW)} Cancelled by user.")
+    raise SystemExit(130)
+
+
+if __name__ == "__main__":
+    signal.signal(signal.SIGINT, handle_interrupt)
+    parser = build_parser()
+    arguments = parser.parse_args()
+    sys.exit(arguments.function(arguments))

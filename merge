@@ -1,0 +1,302 @@
+#!/usr/bin/env python3
+"""Merge CBZ and EPUB files (Python standard library only).
+
+Merged EPUBs use an EPUB 2 package with a generated NCX for compatibility;
+EPUB 3 resources and cover-image properties are retained where possible.
+"""
+import argparse
+import glob
+import io
+import os
+import posixpath
+import re
+import shutil
+import sys
+import tempfile
+import uuid
+import xml.etree.ElementTree as ET
+import zipfile
+from pathlib import Path
+from urllib.parse import quote, unquote, urlsplit
+
+OPF = "http://www.idpf.org/2007/opf"
+DC = "http://purl.org/dc/elements/1.1/"
+NCX = "http://www.daisy.org/z3986/2005/ncx/"
+CONT = "urn:oasis:names:tc:opendocument:xmlns:container"
+IMG = {".jpg", ".jpeg", ".png", ".webp", ".gif", ".avif"}
+ET.register_namespace("", OPF); ET.register_namespace("dc", DC)
+
+def q(ns, tag): return f"{{{ns}}}{tag}"
+def natural_sort_key(value):
+    return [int(x) if x.isdigit() else x.casefold()
+            for x in re.split(r"(\d+)", str(value))]
+def strip_volume_suffix(s):
+    return re.sub(r"[:\-–—,]?\s*(vol(ume)?|book|part)\.?\s*\d+\s*$", "", s, flags=re.I).strip()
+
+def atomic_path(out):
+    out = Path(out).expanduser().resolve()
+    out.parent.mkdir(parents=True, exist_ok=True)
+    return out
+
+def check_inputs(inputs, output):
+    paths = [Path(x).expanduser().resolve() for x in inputs]
+    if len(set(paths)) != len(paths):
+        raise ValueError("duplicate input files are not allowed")
+    if output in paths:
+        raise ValueError(f"output collides with an input: {output}")
+    for p in paths:
+        if not p.is_file(): raise ValueError(f"input file not found: {p}")
+    return paths
+
+def safe_member(name):
+    name = name.replace("\\", "/")
+    if name.startswith("/") or posixpath.normpath(name) in (".", "..") or posixpath.normpath(name).startswith("../"):
+        raise ValueError(f"unsafe ZIP member path: {name!r}")
+    return name
+
+def write_zip_atomic(out, writer, validator):
+    out = atomic_path(out)
+    fd, temp = tempfile.mkstemp(prefix=f".{out.name}.", suffix=".tmp", dir=out.parent)
+    os.close(fd)
+    try:
+        writer(Path(temp))
+        validator(Path(temp))
+        os.replace(temp, out)
+    finally:
+        if os.path.exists(temp): os.unlink(temp)
+
+def merge_cbz(inputs, output):
+    paths = check_inputs(inputs, atomic_path(output))
+    def writer(temp):
+        with zipfile.ZipFile(temp, "w", zipfile.ZIP_DEFLATED) as dst:
+            n = 0
+            for chapter, path in enumerate(paths, 1):
+                print(f"Processing {path} ...")
+                with zipfile.ZipFile(path) as src:
+                    members = []
+                    for info in src.infolist():
+                        safe_member(info.filename)
+                        if not info.is_dir() and Path(info.filename).suffix.casefold() in IMG:
+                            members.append(info)
+                    members.sort(key=lambda i: natural_sort_key(i.filename))
+                    for page, info in enumerate(members, 1):
+                        ext = Path(info.filename).suffix
+                        dst.writestr(f"{chapter:04d}_{page:04d}{ext}", src.read(info))
+                        n += 1
+            if not n: raise ValueError("no image files found in CBZ inputs")
+    write_zip_atomic(output, writer, validate_cbz)
+    print(f"Done! Merged CBZ created: {atomic_path(output)}")
+
+def uri_path(href):
+    parts = urlsplit(href)
+    if parts.scheme or parts.netloc: return None
+    if parts.query: return None
+    return unquote(parts.path)
+
+def resolve_ref(base, href):
+    p = uri_path(href)
+    if p is None: return None
+    return posixpath.normpath(posixpath.join(posixpath.dirname(base), p))
+
+def resolve_ref_with_fragment(base, href):
+    if href is None: return None
+    parts = urlsplit(href)
+    target = resolve_ref(base, href)
+    return target + (("#" + parts.fragment) if target is not None and parts.fragment else "") if target else None
+
+def output_href(path):
+    raw, sep, fragment = path.partition("#")
+    return quote(raw, safe="/:@-._~") + (f"#{quote(fragment, safe=':@-._~')}" if sep else "")
+
+def parse_epub(path):
+    with zipfile.ZipFile(path) as z:
+        infos = z.infolist()
+        if not infos or infos[0].filename != "mimetype" or infos[0].compress_type != zipfile.ZIP_STORED:
+            raise ValueError(f"{path}: mimetype must be the first stored ZIP member")
+        if z.read("mimetype") != b"application/epub+zip":
+            raise ValueError(f"{path}: invalid mimetype")
+        name_map = {}
+        for info in infos:
+            raw = safe_member(info.filename)
+            decoded = unquote(raw)
+            safe_member(decoded)
+            if decoded in name_map and name_map[decoded] != raw:
+                raise ValueError(f"{path}: ambiguous URL-encoded ZIP members: {raw}")
+            name_map[decoded] = raw
+        names = set(name_map)
+        container_name = next((n for n in names if n == "META-INF/container.xml"), None)
+        try: rootxml = ET.fromstring(z.read(name_map[container_name]))
+        except KeyError: raise ValueError(f"{path}: missing META-INF/container.xml")
+        if rootxml.tag != q(CONT, "container"):
+            raise ValueError(f"{path}: invalid container namespace")
+        rf = rootxml.find(f".//{q(CONT,'rootfile')}")
+        if rf is None or not rf.get("full-path") or rf.get("media-type") not in (None, "application/oebps-package+xml"):
+            raise ValueError(f"{path}: invalid container rootfile")
+        opf_name = safe_member(unquote(rf.get("full-path"))); opf_dir = posixpath.dirname(opf_name)
+        if opf_name not in names: raise ValueError(f"{path}: container OPF missing: {opf_name}")
+        try: root = ET.fromstring(z.read(name_map[opf_name]))
+        except Exception as e: raise ValueError(f"{path}: invalid OPF: {e}")
+        if root.tag != q(OPF, "package"):
+            raise ValueError(f"{path}: invalid OPF namespace/root")
+        metadata = root.find(q(OPF, "metadata")); manifest = root.find(q(OPF, "manifest"))
+        spine = root.find(q(OPF, "spine"))
+        if metadata is None or manifest is None or spine is None: raise ValueError(f"{path}: OPF missing metadata/manifest/spine")
+        items = {}
+        ncx = None
+        cover = None
+        for item in manifest.findall(q(OPF, "item")):
+            iid, href = item.get("id"), item.get("href")
+            if (not iid or iid in items or not href or uri_path(href) is None
+                    or urlsplit(href).fragment): raise ValueError(f"{path}: invalid manifest item")
+            full = resolve_ref(opf_name, href)
+            if full is None or full not in names: raise ValueError(f"{path}: manifest file missing: {href}")
+            items[iid] = dict(id=iid, href=href, full=full, media=item.get("media-type",""), props=item.get("properties",""))
+            if item.get("media-type") == "application/x-dtbncx+xml": ncx = iid
+            if iid == "cover" or "cover-image" in item.get("properties","").split(): cover = iid
+        spine_ids = [x.get("idref") for x in spine.findall(q(OPF,"itemref"))]
+        if not spine_ids or any(not x or x not in items for x in spine_ids):
+            raise ValueError(f"{path}: spine references missing manifest item")
+        title = next((x.text.strip() for x in metadata.findall(q(DC,"title")) if x.text and x.text.strip()), path.stem)
+        nav = []
+        if ncx:
+            ncx_name = items[ncx]["full"]
+            try:
+                nr = ET.fromstring(z.read(name_map[ncx_name]))
+                if nr.tag != q(NCX, "ncx"): raise ValueError(f"{path}: invalid NCX namespace/root")
+                navmap = nr.find(q(NCX, "navMap"))
+                def read_points(parent):
+                    result = []
+                    for point in parent.findall(q(NCX, "navPoint")):
+                        content = point.find(q(NCX, "content"))
+                        src = content.get("src") if content is not None else None
+                        result.append((point.findtext(q(NCX, "navLabel") + "/" + q(NCX, "text")) or "",
+                                       resolve_ref_with_fragment(ncx_name, src) if src else None,
+                                       read_points(point)))
+                        if src and (resolve_ref(ncx_name, src) not in names):
+                            raise ValueError(f"{path}: NCX target missing: {src}")
+                    return result
+                if navmap is not None: nav = read_points(navmap)
+            except (ET.ParseError, KeyError) as e:
+                raise ValueError(f"{path}: invalid NCX: {e}")
+        return dict(path=path, zipnames=names, name_map=name_map, root=root, metadata=metadata, items=items, spine=spine_ids,
+                    ncx=ncx, cover=cover, title=title, opf=opf_name, opf_dir=opf_dir, nav=nav)
+
+def metadata_copy(dst, sources, title, author):
+    # Retain descriptive metadata and repeated Dublin Core fields.
+    for source in sources:
+      for child in list(source["metadata"]):
+        tag = child.tag
+        if tag == q(DC,"title") or tag == q(DC,"identifier") or tag == q(DC,"creator") or tag == q(DC,"language"): continue
+        dst.append(ET.fromstring(ET.tostring(child, encoding="unicode")))
+    ET.SubElement(dst, q(DC,"title")).text = title
+    if author:
+        ET.SubElement(dst, q(DC,"creator"), {q(OPF,"role"):"aut"}).text = author
+    else:
+        seen = set()
+        for s in sources:
+            for creator in s["metadata"].findall(q(DC,"creator")):
+                key = (creator.text or "", tuple(sorted(creator.attrib.items())))
+                if creator.text and key not in seen:
+                    dst.append(ET.fromstring(ET.tostring(creator, encoding="unicode"))); seen.add(key)
+    langs = [x.text.strip() for s in sources for x in s["metadata"].findall(q(DC,"language")) if x.text and x.text.strip()]
+    for lang in dict.fromkeys(langs):
+        ET.SubElement(dst, q(DC,"language")).text = lang
+    ident = ET.SubElement(dst, q(DC,"identifier"), {"id":"BookId"}); ident.text = f"urn:uuid:{uuid.uuid4()}"
+    return ident.text
+
+def build_epub(inputs, output, title=None, author=None):
+    paths = check_inputs(inputs, atomic_path(output)); sources = [parse_epub(p) for p in paths]
+    title = title or strip_volume_suffix(sources[0]["title"]) or "Merged Book"
+    with tempfile.TemporaryDirectory(prefix="merge_epub_") as work:
+        root = Path(work); oebps = root/"OEBPS"; oebps.mkdir(); (root/"META-INF").mkdir()
+        manifest=[]; spine=[]; nav=[]; cover_id=None
+        for i, s in enumerate(sources,1):
+            prefix=f"v{i:02d}"; dest=oebps/prefix; dest.mkdir()
+            with zipfile.ZipFile(s["path"]) as z:
+                for name in s["zipnames"]:
+                    if name == s["opf"] or name == (s["items"][s["ncx"]]["full"] if s["ncx"] else ""): continue
+                    if name in ("mimetype","META-INF/container.xml"): continue
+                    rel = posixpath.relpath(name, s["opf_dir"])
+                    if rel == ".." or rel.startswith("../"):
+                        raise ValueError(f"{s['path']}: ZIP member outside OPF directory: {name}")
+                    target=dest/rel; target.parent.mkdir(parents=True,exist_ok=True); target.write_bytes(z.read(s["name_map"][name]))
+            for iid,it in s["items"].items():
+                if iid == s["ncx"]: continue
+                mid=f"{prefix}_{iid}";                 href=output_href(f"{prefix}/{posixpath.relpath(it['full'],s['opf_dir'])}")
+                entry={"id":mid,"href":href,"media":it["media"],"props":it["props"]}; manifest.append(entry)
+                if iid == s["cover"] and cover_id is None: cover_id=mid
+            spine += [f"{prefix}_{x}" for x in s["spine"]]
+            first = next((s["items"][x] for x in s["spine"] if x in s["items"]), None)
+            nav.append((s["title"], prefix, first, s, s["nav"]))
+        pkg=ET.Element(q(OPF,"package"),{"version":"2.0","unique-identifier":"BookId"})
+        md=ET.SubElement(pkg,q(OPF,"metadata")); md.set("xmlns:dc",DC); md.set("xmlns:opf",OPF)
+        bookid=metadata_copy(md,sources,title,author)
+        if cover_id: ET.SubElement(md,"meta",{"name":"cover","content":cover_id})
+        man=ET.SubElement(pkg,q(OPF,"manifest")); ET.SubElement(man,q(OPF,"item"),{"id":"ncx","href":"toc.ncx","media-type":"application/x-dtbncx+xml"})
+        for x in manifest: ET.SubElement(man,q(OPF,"item"),{"id":x["id"],"href":x["href"],"media-type":x["media"],**({"properties":x["props"]} if x["props"] else {})})
+        sp=ET.SubElement(pkg,q(OPF,"spine"),{"toc":"ncx"}); [ET.SubElement(sp,q(OPF,"itemref"),{"idref":x}) for x in spine]
+        ET.ElementTree(pkg).write(oebps/"content.opf",encoding="utf-8",xml_declaration=True)
+        nx=ET.Element(q(NCX,"ncx"),{"version":"2005-1"}); hd=ET.SubElement(nx,q(NCX,"head")); ET.SubElement(hd,q(NCX,"meta"),{"name":"dtb:uid","content":bookid})
+        ET.SubElement(ET.SubElement(nx,q(NCX,"docTitle")),q(NCX,"text")).text=title; navmap=ET.SubElement(nx,q(NCX,"navMap")); order=0
+        for vt,prefix,first,s,points in nav:
+            order+=1; np=ET.SubElement(navmap,q(NCX,"navPoint"),{"id":f"np-{order}","playOrder":str(order)}); ET.SubElement(ET.SubElement(np,q(NCX,"navLabel")),q(NCX,"text")).text=vt
+            if first is None:
+                raise ValueError(f"{s['path']}: cannot create NCX volume entry without a spine document")
+            src=output_href(f"{prefix}/{posixpath.relpath(first['full'],s['opf_dir'])}"); ET.SubElement(np,q(NCX,"content"),{"src":src})
+            def add_children(parent, children):
+                nonlocal order
+                for label, target, nested in children:
+                    order += 1
+                    child=ET.SubElement(parent,q(NCX,"navPoint"),{"id":f"np-{order}","playOrder":str(order)})
+                    ET.SubElement(ET.SubElement(child,q(NCX,"navLabel")),q(NCX,"text")).text=label
+                    if target:
+                        target_path, sep, fragment = target.partition("#")
+                        rel=posixpath.relpath(target_path,s['opf_dir'])
+                        if rel == ".." or rel.startswith("../"):
+                            raise ValueError(f"{s['path']}: NCX reference outside OPF directory: {target}")
+                        ET.SubElement(child,q(NCX,"content"),{"src":output_href(f"{prefix}/{rel}" + (f"#{fragment}" if sep else ""))})
+                    add_children(child,nested)
+            add_children(np, points)
+        ET.ElementTree(nx).write(oebps/"toc.ncx",encoding="utf-8",xml_declaration=True)
+        (root/"mimetype").write_text("application/epub+zip",encoding="ascii")
+        (root/"META-INF/container.xml").write_text('<?xml version="1.0"?><container version="1.0" xmlns="'+CONT+'"><rootfiles><rootfile full-path="OEBPS/content.opf" media-type="application/oebps-package+xml"/></rootfiles></container>',encoding="utf-8")
+        def writer(temp):
+            with zipfile.ZipFile(temp,"w") as z:
+                z.write(root/"mimetype","mimetype",compress_type=zipfile.ZIP_STORED)
+                for f in root.rglob("*"):
+                    if f.is_file() and f != root/"mimetype": z.write(f,f.relative_to(root).as_posix(),compress_type=zipfile.ZIP_DEFLATED)
+        write_zip_atomic(output,writer,validate_epub)
+    print(f"Wrote merged epub: {atomic_path(output)}")
+
+def validate_cbz(path):
+    with zipfile.ZipFile(path) as z:
+        if z.testzip() is not None: raise ValueError("output CBZ ZIP integrity failure")
+
+def validate_epub(path):
+    with zipfile.ZipFile(path) as z:
+        bad=z.testzip()
+        if bad: raise ValueError(f"output ZIP integrity failure: {bad}")
+        infos=z.infolist()
+        if not infos or infos[0].filename != "mimetype" or infos[0].compress_type != zipfile.ZIP_STORED:
+            raise ValueError("output mimetype is not first and stored")
+        if z.read("mimetype") != b"application/epub+zip": raise ValueError("invalid EPUB mimetype")
+        parse_epub(path)
+
+def run(args):
+    ext=args.format
+    files=sorted(glob.glob(os.path.join(args.directory,f"*.{ext}")),key=natural_sort_key) if args.directory else args.files
+    if len(files)<2: args.parser.error(f"Need at least 2 {ext.upper()}s to merge.")
+    try:
+        (merge_cbz if ext=="cbz" else build_epub)(files,args.output,**({} if ext=="cbz" else {"title":args.title,"author":args.author}))
+        return 0
+    except (OSError,zipfile.BadZipFile,ET.ParseError,ValueError) as e:
+        print(f"error: {e}",file=sys.stderr); return 1
+
+def main():
+    p=argparse.ArgumentParser(); sub=p.add_subparsers(dest="format",required=True)
+    for fmt,default in (("cbz","complete.cbz"),("epub",None)):
+        x=sub.add_parser(fmt); x.add_argument("files",nargs="*"); x.add_argument("--dir","-d",dest="directory"); x.add_argument("-o","--output",default=default,required=fmt=="epub")
+        if fmt=="epub": x.add_argument("--title"); x.add_argument("--author")
+        x.set_defaults(parser=x)
+    args=p.parse_args(); return run(args)
+if __name__=="__main__": sys.exit(main())

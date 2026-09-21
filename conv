@@ -1,0 +1,150 @@
+#!/bin/bash
+# Conversion utilities. Usage: conv <subcommand> [args...]
+set -e
+
+usage() {
+    echo "Usage: conv <pdf-to-cbz|to-gif|to-env> [args...]"
+    exit 1
+}
+
+cmd_pdf_to_cbz() {
+    local INPUT_PDF="$1"
+    local OUTPUT_CBZ="$2"
+    local TEMP_DIR="comic_processing_tmp"
+
+    for cmd in pdftoppm magick zip; do
+        if ! command -v $cmd &> /dev/null; then
+            echo "Error: '$cmd' is not installed."
+            exit 1
+        fi
+    done
+
+    if [ ! -f "$INPUT_PDF" ]; then
+        echo "Error: Input file '$INPUT_PDF' not found."
+        exit 1
+    fi
+
+    echo "Step 1/3: Extracting and rendering PDF pages (this may take a few minutes)..."
+    mkdir -p "$TEMP_DIR"
+    # Renders pages at 150 DPI into PNG format to preserve text sharpess initially
+    pdftoppm -png -r 150 "$INPUT_PDF" "$TEMP_DIR/page"
+
+    echo "Step 2/3: Compressing images to optimized JPEGs..."
+    cd "$TEMP_DIR"
+    # Converts PNGs to 75% quality JPEGs (visually lossless but tiny size)
+    magick mogrify -format jpg -quality 75 *.png
+    rm *.png # Clean up heavy PNG files
+    cd ..
+
+    echo "Step 3/3: Packaging pages into a CBZ comic file..."
+    cd "$TEMP_DIR"
+    zip -q -r "../$OUTPUT_CBZ" *
+    cd ..
+
+    echo "Cleaning up temporary files..."
+    rm -rf "$TEMP_DIR"
+
+    echo "Success! Compressed comic saved as: $OUTPUT_CBZ"
+}
+
+cmd_to_gif() {
+    if [ -z "$1" ]; then
+        echo "Usage: conv to-gif input.mp4 [output.gif] [fps] [width]"
+        echo "Example: conv to-gif video.mp4 animation.gif 10 320"
+        exit 1
+    fi
+
+    local INPUT="$1"
+    local OUTPUT="${2:-${INPUT%.mp4}.gif}"
+    local FPS="${3:-10}"
+    local WIDTH="${4:-1920}"
+    local PALETTE="/tmp/palette.png"
+
+    echo "Converting $INPUT to $OUTPUT..."
+    echo "Settings: FPS=$FPS, Width=$WIDTH"
+
+    # 1. Generate optimal palette
+    ffmpeg -y -i "$INPUT" -vf "fps=$FPS,scale=$WIDTH:-1:flags=lanczos,palettegen" "$PALETTE"
+
+    # 2. Apply palette for high quality
+    ffmpeg -i "$INPUT" -i "$PALETTE" -lavfi "fps=$FPS,scale=$WIDTH:-1:flags=lanczos [x]; [x][1:v] paletteuse" -loop 0 "$OUTPUT"
+
+    if [ $? -eq 0 ]; then
+        echo "✅ GIF created: $OUTPUT"
+    else
+        echo "❌ Conversion failed"
+        exit 1
+    fi
+}
+
+cmd_to_env() {
+    if [ $# -lt 1 ]; then
+        echo "Usage: conv to-env <directory_path_or_file>"
+        exit 1
+    fi
+
+    python3 - "$@" <<'PYEOF'
+import os
+import sys
+
+# Map hardcoded paths to their portable counterparts
+SHEBANG_MAP = {
+    b"#!/bin/bash": b"#!/usr/bin/env bash",
+    b"#!/usr/bin/sh": b"#!/usr/bin/env sh",
+    b"#!/bin/sh": b"#!/usr/bin/env sh",
+    b"#!/usr/bin/python": b"#!/usr/bin/env python3",
+    b"#!/usr/bin/python3": b"#!/usr/bin/env python3",
+    b"#!/usr/bin/perl": b"#!/usr/bin/env perl",
+    b"#!/usr/bin/node": b"#!/usr/bin/env node",
+}
+
+def fix_file(filepath):
+    try:
+        with open(filepath, "rb") as f:
+            content = f.read()
+    except Exception:
+        return # Skip unreadable files (e.g. binaries)
+
+    for old, new in SHEBANG_MAP.items():
+        if content.startswith(old):
+            new_content = content.replace(old, new, 1)
+
+            try:
+                with open(filepath, "wb") as f:
+                    f.write(new_content)
+                print(f"[FIXED] {filepath} -> Modified shebang to use 'env'")
+                return
+            except Exception as e:
+                print(f"[ERROR] Could not write to {filepath}: {e}")
+                return
+
+def scan_dir(target_dir):
+    print(f"Scanning directory: {target_dir}...")
+    for root, _, files in os.walk(target_dir):
+        for file in files:
+            filepath = os.path.join(root, file)
+            if "/." in filepath or "node_modules" in filepath:
+                continue
+            fix_file(filepath)
+
+path = sys.argv[1]
+if os.path.isdir(path):
+    scan_dir(path)
+elif os.path.isfile(path):
+    fix_file(path)
+else:
+    print("Invalid path specified.")
+PYEOF
+}
+
+[ $# -lt 1 ] && usage
+
+SUBCOMMAND="$1"
+shift
+
+case "$SUBCOMMAND" in
+    pdf-to-cbz) cmd_pdf_to_cbz "$@" ;;
+    to-gif) cmd_to_gif "$@" ;;
+    to-env) cmd_to_env "$@" ;;
+    *) usage ;;
+esac

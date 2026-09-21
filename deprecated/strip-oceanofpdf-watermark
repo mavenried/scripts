@@ -1,0 +1,190 @@
+#!/usr/bin/env python3
+"""
+Strip OceanOfPDF.com watermarks from one or more .epub files, in place.
+
+Handles both watermark forms seen in the wild:
+  1. A watermark link/paragraph injected into html/xhtml body content,
+     in any of several markups (bare <p>, or <p> wrapped in a <div>,
+     with or without inline style / class attributes, with or without
+     nested <span>/<i> tags around the link text).
+  2. A stray zero-content file literally named "oceanofpdf.com" dropped
+     unreferenced into the epub's zip root (not part of the manifest/spine).
+
+Usage:
+    strip-oceanofpdf-watermark                # all .epub in cwd
+    strip-oceanofpdf-watermark file1.epub ...  # specific files
+    strip-oceanofpdf-watermark /path/to/dir    # all .epub in dir (recursive)
+    strip-oceanofpdf-watermark -v              # per-file detail
+    strip-oceanofpdf-watermark --dry-run       # report only, change nothing
+"""
+import argparse
+import os
+import re
+import sys
+import zipfile
+
+# A <div> whose only child is a single oceanofpdf <p>...</p> -- remove the
+# whole div so no empty wrapper is left behind.
+DIV_WRAP_RE = re.compile(
+    r'<div\b[^>]*>\s*(<p\b[^>]*>(?:(?!</p>).)*?oceanofpdf(?:(?!</p>).)*?</p>)\s*</div>',
+    re.IGNORECASE | re.DOTALL,
+)
+# Any remaining standalone <p>...</p> that references oceanofpdf (catches
+# the div-less variant, and anything left over inside a div that had other
+# siblings so the DIV_WRAP_RE pass above didn't apply).
+P_ONLY_RE = re.compile(
+    r'<p\b[^>]*>(?:(?!</p>).)*?oceanofpdf(?:(?!</p>).)*?</p>',
+    re.IGNORECASE | re.DOTALL,
+)
+# Bare "https://oceanofpdf.com" link with no wrapping <p> at all (rare, but
+# seen as a lone <a> or <div><a>...</a></div>).
+BARE_LINK_RE = re.compile(
+    r'<a\b[^>]*href="https?://(?:www\.)?oceanofpdf\.com/?"[^>]*>.*?</a>',
+    re.IGNORECASE | re.DOTALL,
+)
+
+CONTENT_EXTS = (".html", ".xhtml", ".htm")
+
+
+def clean_html(text):
+    changed = False
+    new_text = DIV_WRAP_RE.sub("", text)
+    if new_text != text:
+        changed = True
+    new_text2 = P_ONLY_RE.sub("", new_text)
+    if new_text2 != new_text:
+        changed = True
+    new_text3 = BARE_LINK_RE.sub("", new_text2)
+    if new_text3 != new_text2:
+        changed = True
+    return new_text3, changed
+
+
+def strip_epub(epub_path, verbose=False, dry_run=False):
+    with zipfile.ZipFile(epub_path, "r") as zin:
+        infos = zin.infolist()
+        contents = {info.filename: zin.read(info.filename) for info in infos}
+        opf_text = ""
+        for info in infos:
+            if info.filename.lower().endswith(".opf"):
+                opf_text += contents[info.filename].decode("utf-8", "ignore").lower()
+
+    changed_files = []
+    removed_entries = []
+    new_contents = {}
+    new_infos = []
+
+    for info in infos:
+        name = info.filename
+        base = os.path.basename(name).lower()
+        data = contents[name]
+
+        if base == "oceanofpdf.com" and "oceanofpdf.com" not in opf_text:
+            removed_entries.append(name)
+            if verbose:
+                print(f"    removed stray entry: {name}")
+            continue
+
+        if name.lower().endswith(CONTENT_EXTS):
+            text = data.decode("utf-8", "ignore")
+            if "oceanofpdf" in text.lower():
+                new_text, changed = clean_html(text)
+                if changed:
+                    changed_files.append(name)
+                    data = new_text.encode("utf-8")
+                    if verbose:
+                        print(f"    cleaned: {name}")
+
+        new_contents[name] = data
+        new_infos.append(info)
+
+    if not changed_files and not removed_entries:
+        return 0, 0, True
+
+    if dry_run:
+        return len(changed_files), len(removed_entries), True
+
+    tmp_path = epub_path + ".tmp"
+    try:
+        with zipfile.ZipFile(tmp_path, "w") as zout:
+            for info in new_infos:
+                data = new_contents[info.filename]
+                compress_type = zipfile.ZIP_STORED if info.filename == "mimetype" else info.compress_type
+                zout.writestr(info, data, compress_type=compress_type)
+
+        ok = True
+        try:
+            with zipfile.ZipFile(tmp_path) as ztest:
+                if ztest.testzip() is not None:
+                    ok = False
+                if not any(n.lower().endswith(".opf") for n in ztest.namelist()):
+                    ok = False
+        except Exception:
+            ok = False
+
+        if ok:
+            os.replace(tmp_path, epub_path)
+        else:
+            os.remove(tmp_path)
+            return len(changed_files), len(removed_entries), False
+    except Exception:
+        if os.path.exists(tmp_path):
+            os.remove(tmp_path)
+        raise
+
+    return len(changed_files), len(removed_entries), True
+
+
+def collect_targets(paths):
+    if not paths:
+        return sorted(f for f in os.listdir(".") if f.endswith(".epub"))
+    if len(paths) == 1 and os.path.isdir(paths[0]):
+        targets = []
+        for root, _dirs, files in os.walk(paths[0]):
+            for f in files:
+                if f.endswith(".epub"):
+                    targets.append(os.path.join(root, f))
+        return sorted(targets)
+    return paths
+
+
+def main():
+    parser = argparse.ArgumentParser(description="Strip OceanOfPDF.com watermarks from epub files.")
+    parser.add_argument("paths", nargs="*", help="epub file(s) or a directory (searched recursively; default: .epub files in cwd)")
+    parser.add_argument("-v", "--verbose", action="store_true", help="print per-file detail within each epub")
+    parser.add_argument("--dry-run", action="store_true", help="report what would change without modifying any file")
+    args = parser.parse_args()
+
+    targets = collect_targets(args.paths)
+    if not targets:
+        print("No .epub files found.")
+        return
+
+    any_failed = False
+    for path in targets:
+        if args.verbose:
+            print(f"{path}:")
+        try:
+            n_content, n_stray, ok = strip_epub(path, verbose=args.verbose, dry_run=args.dry_run)
+        except Exception as e:
+            print(f"{path}: ERROR ({e})")
+            any_failed = True
+            continue
+
+        if not ok:
+            print(f"{path}: FAILED validation after strip, left unchanged")
+            any_failed = True
+            continue
+
+        if n_content == 0 and n_stray == 0:
+            print(f"{path}: clean, nothing to do")
+        else:
+            action = "would clean" if args.dry_run else "cleaned"
+            print(f"{path}: {action} {n_content} content file(s), removed {n_stray} stray entry(ies)")
+
+    if any_failed:
+        sys.exit(1)
+
+
+if __name__ == "__main__":
+    main()

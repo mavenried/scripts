@@ -1,0 +1,77 @@
+#!/usr/bin/env zsh
+
+setopt null_glob
+
+persist_series=false
+
+while [[ $# -gt 0 ]]; do
+    case "$1" in
+        -p|--persist-series)
+            persist_series=true
+            shift
+            ;;
+        -h|--help)
+            echo "Usage: $0 [-p|--persist-series]"
+            echo
+            echo "Options:"
+            echo "  -p, --persist-series  Reuse the series name for subsequent books"
+            echo "  -h, --help            Show this help"
+            exit 0
+            ;;
+        *)
+            echo "Unknown option: $1"
+            echo "Try '$0 --help'"
+            exit 1
+            ;;
+    esac
+done
+
+series=""
+
+for book in ./*.epub; do
+    echo "Book: ${book:t}"
+
+    if [[ "$persist_series" == true && -n "$series" ]]; then
+        gum style --foreground 6 "Series: $series"
+    else
+        series=$(gum input \
+            --placeholder "Series name" \
+            --prompt "Series: ")
+
+        [[ -z "$series" ]] && {
+            gum style --foreground 3 "Skipped: no series name."
+            continue
+        }
+    fi
+
+    index=$(gum input \
+        --placeholder "Series index" \
+        --prompt "Index: ")
+
+    [[ -z "$index" ]] && {
+        gum style --foreground 3 "Skipped: no series index."
+        continue
+    }
+
+    echo
+
+    gum style \
+        --border rounded \
+        --padding "0 1" \
+        "Series: $series" \
+        "Index:  $index"
+
+    if gum confirm "Apply changes to ${book:t}?"; then
+        if ebook-meta "$book" \
+            --series "$series" \
+            --index "$index"; then
+            gum style --foreground 2 "✓ Updated ${book:t}"
+        else
+            gum style --foreground 1 "✗ Failed to update ${book:t}"
+        fi
+    else
+        gum style --foreground 3 "Skipped ${book:t}"
+    fi
+
+    unset index
+done

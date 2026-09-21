@@ -27,7 +27,7 @@ for f in "$@"; do
 done
 
 cd merged
-zip -q -r "../$output" .
+zip -q -r "../$output" . 
 cd ..
 rm -rf merged
 

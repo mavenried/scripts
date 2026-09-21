@@ -1,0 +1,119 @@
+#!/usr/bin/env python3
+"""Song metadata utilities. Usage: song <diff|match|rename>
+
+Each subcommand reads a list of file paths from stdin (one per line).
+"""
+
+import re
+import sys
+from collections import defaultdict
+from pathlib import Path
+
+from mutagen.easyid3 import EasyID3
+from mutagen.mp3 import MP3
+
+
+def get_metadata(path):
+    try:
+        audio = MP3(path, ID3=EasyID3)
+        title = audio.get('title', [''])[0].lower().strip()
+        artist = audio.get('artist', [''])[0].lower().strip()
+        album = audio.get('album', [''])[0].lower().strip()
+        return (title, artist, album)
+    except Exception:
+        return None
+
+
+def cmd_diff(args):
+    """Print only songs whose metadata has no duplicates."""
+    file_list = [line.strip() for line in sys.stdin if line.strip()]
+    metadata_map = defaultdict(list)
+
+    for file_path in file_list:
+        meta = get_metadata(file_path)
+        if meta:
+            metadata_map[meta].append(file_path)
+
+    for files in metadata_map.values():
+        if len(files) == 1:
+            print(files[0])
+
+
+def cmd_match(args):
+    """Print groups of songs with matching metadata but different filenames."""
+    file_list = [line.strip() for line in sys.stdin if line.strip()]
+    metadata_map = defaultdict(list)
+
+    for file_path in file_list:
+        meta = get_metadata(file_path)
+        if meta:
+            metadata_map[meta].append(file_path)
+
+    for files in metadata_map.values():
+        if len(files) > 1:
+            filenames = {Path(f).name for f in files}
+            if len(filenames) > 1:
+                print("Matching song with different filenames:")
+                for f in files:
+                    print(f)
+                print()
+
+
+def clean_filename(s):
+    return re.sub(r'[<>:"/\\|?*]', '', s)
+
+
+def get_title_artist(path):
+    try:
+        audio = MP3(path, ID3=EasyID3)
+        title = audio.get('title', [''])[0].strip()
+        artist_list = audio.get('artist', [''])[0].strip()
+        return title, artist_list
+    except Exception:
+        return None, None
+
+
+def cmd_rename(args):
+    """Rename files to '<artists> - <title>.mp3' based on their metadata."""
+    for line in sys.stdin:
+        file_path = line.strip()
+        if not file_path:
+            continue
+
+        title, artist_str = get_title_artist(file_path)
+        if not title or not artist_str:
+            print(f"Skipping {file_path}: missing metadata")
+            continue
+
+        artists = [a.strip() for a in re.split(r'[/;]', artist_str)]
+        new_name = f"{', '.join(artists)} - {title}.mp3"
+        new_name = clean_filename(new_name)
+
+        old_path = Path(file_path)
+        new_path = old_path.with_name(new_name)
+
+        if new_path.exists():
+            print(f"Skipping {file_path}: target {new_path} already exists")
+            continue
+
+        old_path.rename(new_path)
+        print(f"Renamed: {old_path} -> {new_path}")
+
+
+SUBCOMMANDS = {
+    "diff": cmd_diff,
+    "match": cmd_match,
+    "rename": cmd_rename,
+}
+
+
+def main():
+    if len(sys.argv) < 2 or sys.argv[1] not in SUBCOMMANDS:
+        print(f"Usage: song <{'|'.join(SUBCOMMANDS)}>")
+        sys.exit(1)
+
+    SUBCOMMANDS[sys.argv[1]](sys.argv[2:])
+
+
+if __name__ == "__main__":
+    main()

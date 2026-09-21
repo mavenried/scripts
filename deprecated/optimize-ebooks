@@ -1,0 +1,131 @@
+#!/usr/bin/env zsh
+
+setopt null_glob
+
+root="."
+dry_run=false
+quiet=false
+
+usage() {
+    cat <<EOF
+Usage: $0 [OPTIONS] [DIRECTORY]
+
+Recursively polish EPUB files using ebook-polish.
+
+Options:
+  -n, --dry-run    Show what would be processed without modifying files
+  -q, --quiet      Only show failures
+  -h, --help       Show this help
+EOF
+}
+
+while [[ $# -gt 0 ]]; do
+    case "$1" in
+        -n|--dry-run)
+            dry_run=true
+            shift
+            ;;
+        -q|--quiet)
+            quiet=true
+            shift
+            ;;
+        -h|--help)
+            usage
+            exit 0
+            ;;
+        -*)
+            gum style --foreground 1 "Unknown option: $1"
+            usage
+            exit 1
+            ;;
+        *)
+            root="$1"
+            shift
+            ;;
+    esac
+done
+
+if [[ ! -d "$root" ]]; then
+    gum style --foreground 1 "Directory does not exist: $root"
+    exit 1
+fi
+
+books=("${(@0)$(find "$root" -type f \( \
+    -iname '*.epub' \
+    -o -iname '*.epub3' \
+\) -print0)}")
+
+count=${#books[@]}
+
+if (( count == 0 )); then
+    gum style --foreground 3 "No EPUBs found in $root"
+    exit 0
+fi
+
+gum style \
+    --bold \
+    "EPUB Library Optimizer"
+
+echo
+echo "Directory:    $root"
+echo "EPUBs found:  $count"
+echo
+
+if [[ "$dry_run" == true ]]; then
+    gum style --foreground 3 "DRY RUN — no files will be modified."
+elif ! gum confirm "Polish all $count EPUBs?"; then
+    gum style --foreground 3 "Cancelled."
+    exit 0
+fi
+
+echo
+
+typeset -i success=0
+typeset -i failed=0
+typeset -i current=0
+
+for book in "${books[@]}"; do
+    (( current++ ))
+
+    relative="${book#$root/}"
+
+    if [[ "$dry_run" == true ]]; then
+        printf '%3d/%d  %s\n' "$current" "$count" "$relative"
+        continue
+    fi
+
+    if [[ "$quiet" == false ]]; then
+        printf '%3d/%d  %s ... ' "$current" "$count" "$relative"
+    fi
+
+    if ebook-polish -UdH "$book" >/dev/null 2>&1; then
+        (( success++ ))
+
+        if [[ "$quiet" == false ]]; then
+            gum style --foreground 2 "✓"
+        fi
+    else
+        (( failed++ ))
+        gum style --foreground 1 "✗ $relative"
+    fi
+done
+
+echo
+
+if [[ "$dry_run" == true ]]; then
+    gum style --foreground 2 "Dry run complete — $count EPUBs would be polished."
+else
+    gum style \
+        --bold \
+        "Optimization complete"
+
+    echo
+    echo "Processed: $count"
+    gum style --foreground 2 "Succeeded: $success"
+
+    if (( failed > 0 )); then
+        gum style --foreground 1 "Failed:    $failed"
+    else
+        echo "Failed:    0"
+    fi
+fi
