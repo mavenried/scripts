@@ -17,7 +17,9 @@ def strip_spaces(args):
             if file == new_name:
                 continue
 
-            user_input = input(f"Rename '{file}' to '{new_name}'? (Y/n): ").strip().lower()
+            user_input = (
+                input(f"Rename '{file}' to '{new_name}'? (Y/n): ").strip().lower()
+            )
 
             if user_input in ("", "y", "yes"):
                 try:
@@ -36,7 +38,9 @@ def strip_spaces_name(file):
     if " " not in file_name and ext == ext.lower():
         return file
 
-    clean_name = "".join([word[0].upper() + word[1:] for word in file_name.split(" ") if word])
+    clean_name = "".join(
+        [word[0].upper() + word[1:] for word in file_name.split(" ") if word]
+    )
     return f"{clean_name}{ext.lower()}"
 
 
@@ -48,7 +52,7 @@ def clean_name(args):
 
             file_name, ext = os.path.splitext(file)
             file_name = re.sub(
-                r"^(?:OceanofPdf\.com|_oceanofpdf)",
+                r"^(?:OceanofPdf\.com|_oceanofpdf.com)",
                 "",
                 file_name,
                 count=1,
@@ -61,7 +65,9 @@ def clean_name(args):
             if file == new_name:
                 continue
 
-            user_input = input(f"Rename '{file}' to '{new_name}'? (Y/n): ").strip().lower()
+            user_input = (
+                input(f"Rename '{file}' to '{new_name}'? (Y/n): ").strip().lower()
+            )
 
             if user_input in ("", "y", "yes"):
                 try:
