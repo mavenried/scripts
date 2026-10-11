@@ -1,0 +1,104 @@
+#!/usr/bin/env python3
+import os
+import sys
+import shutil
+import time
+import threading
+
+# Build directory patterns across ecosystems
+ARTIFACT_DIRS = {
+    # Rust / Java Maven
+    "target",
+    # Web / Node / JS / TS
+    "node_modules", "dist", "build", "out", ".next", ".nuxt",
+    ".svelte-kit", ".astro", ".output", ".turbo",
+    # Java / Kotlin Gradle
+    ".gradle",
+    # C / C++ / CMake
+    "cmake-build-debug", "cmake-build-release", "CMakeFiles",
+    # C# / .NET / Swift
+    "bin", "obj", ".build",
+    # Python
+    "__pycache__", ".pytest_cache", ".venv", "venv", ".tox",
+    ".mypy_cache", ".ruff_cache",
+}
+
+def is_artifact(dir_name: str) -> bool:
+    return dir_name in ARTIFACT_DIRS or dir_name.endswith(".egg-info")
+
+def scan_artifacts(root_path: str) -> list[str]:
+    found = []
+    for root, dirs, _ in os.walk(root_path, topdown=True):
+        # Ignore source control directories during search
+        dirs[:] = [d for d in dirs if d not in {".git", ".svn", ".hg"}]
+
+        keep = []
+        for d in dirs:
+            if is_artifact(d):
+                found.append(os.path.join(root, d))
+            else:
+                keep.append(d)
+
+        # Mutate dirs in-place to prevent os.walk from descending into matched artifacts
+        dirs[:] = keep
+
+    return found
+
+class Spinner:
+    """Terminal spinner for feedback during deletion."""
+    def __init__(self, message="Removing..."):
+        self.message = message
+        self.stop_running = False
+        self.thread = None
+
+    def _spin(self):
+        frames = ["⠋", "⠙", "⠹", "⠸", "⠼", "⠴", "⠦", "⠧", "⠇", "⠏"]
+        idx = 0
+        while not self.stop_running:
+            sys.stdout.write(f"\r\033[33m{frames[idx % len(frames)]} {self.message}\033[0m")
+            sys.stdout.flush()
+            time.sleep(0.08)
+            idx += 1
+        sys.stdout.write("\r\033[K")
+        sys.stdout.flush()
+
+    def __enter__(self):
+        self.thread = threading.Thread(target=self._spin, daemon=True)
+        self.thread.start()
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        self.stop_running = True
+        if self.thread:
+            self.thread.join()
+
+def clean():
+    # Priority: Command line argument > $PROJECT_HOME > Current working directory
+    target_dir = sys.argv[1] if len(sys.argv) > 1 else os.getenv("PROJECT_HOME", ".")
+    target_dir = os.path.abspath(target_dir)
+
+    artifacts = scan_artifacts(target_dir)
+
+    if not artifacts:
+        print(f"\033[31mNothing to clean in {target_dir}.\033[0m")
+        return
+
+    print("\033[33mFound the following directories:\033[0m")
+    for path in artifacts:
+        print(f"\033[31m{path}\033[0m")
+
+    try:
+        confirm = input("\nDo you want to delete these directories? [y/N]: ").strip().lower()
+    except (KeyboardInterrupt, EOFError):
+        print("\n\033[31mAborted.\033[0m")
+        return
+
+    if confirm in ("y", "yes"):
+        with Spinner("Removing build artifacts..."):
+            for path in artifacts:
+                shutil.rmtree(path, ignore_errors=True)
+        print("\033[32mSuccessfully cleaned.\033[0m")
+    else:
+        print("\033[31mAborted.\033[0m")
+
+if __name__ == "__main__":
+    clean()

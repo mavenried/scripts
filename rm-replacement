@@ -1,0 +1,114 @@
+#!/bin/zsh
+
+# rm-replacement v0.1.0
+
+setopt localoptions
+
+if ! (( $+commands[trash-put] )); then
+  print -u2 "rm-replacement: trash-put is required (install trash-cli)"
+  exit 127
+fi
+
+usage() {
+  print -u2 "usage: rm-replacement [-f] [--] FILE ..."
+  print -u2 "       rm-replacement -e"
+  print -u2 "       rm-replacement -l"
+}
+
+force=0
+empty=0
+list=0
+files=()
+
+while (( $# )); do
+  case "$1" in
+    --)
+      shift
+      files+=("$@")
+      break
+      ;;
+    -f|--force)
+      force=1
+      shift
+      ;;
+    -e|--empty)
+      empty=1
+      shift
+      ;;
+    -l|--list)
+      list=1
+      shift
+      ;;
+    -*)
+      # Accept common rm option bundles, while leaving unsupported options
+      # for trash-put to diagnose.
+      if [[ "$1" == -*f* && "$1" != --* ]]; then
+        force=1
+        option=${1//f/}
+        [[ -n "$option" && "$option" != "-" ]] && print -u2 "rm-replacement: ignoring $option"
+        shift
+      else
+        print -u2 "rm-replacement: unsupported option: $1"
+        usage
+        exit 2
+      fi
+      ;;
+    *)
+      files+=("$1")
+      shift
+      ;;
+  esac
+done
+
+if (( empty || list )); then
+  if (( ${#files} )); then
+    print -u2 "rm-replacement: -e and -l cannot be used with file arguments"
+    usage
+    exit 2
+  fi
+  command_name=trash-empty
+  (( list )) && command_name=trash-list
+  if ! (( $+commands[$command_name] )); then
+    print -u2 "rm-replacement: $command_name is required (install trash-cli)"
+    exit 127
+  fi
+  exec "$command_name"
+fi
+
+if (( ! ${#files} )); then
+  usage
+  exit 2
+fi
+
+trashed=()
+for file in "${files[@]}"; do
+  if [[ -d "$file" && $force -eq 0 ]]; then
+    answer=''
+    prompt=$'\e[36m'"Trash directory '$file'? [y/N] "$'\e[0m'
+    if [[ ! -r /dev/tty ]] || ! read -r "answer?$prompt" < /dev/tty; then
+      print -u2 "\nrm-replacement: skipped '$file'"
+      continue
+    fi
+    [[ "$answer" == [yY] || "$answer" == [yY][eE][sS] ]] || continue
+  fi
+
+  trashed+=("$file")
+done
+
+count=${#trashed}
+if (( count == 0 )); then
+  exit 1
+elif trash-put -- "${trashed[@]}" >/dev/null; then
+  :
+else
+  print -u2 "rm-replacement: failed to trash one or more paths"
+  exit 1
+fi
+
+if (( count > 100 )); then
+  print -P "\e[33m$count files deleted.\e[0m"
+else
+  for file in "${trashed[@]}"; do
+    print -P "\e[33mDeleted: $file\e[0m"
+  done
+fi

@@ -5,6 +5,7 @@ packages=(
   "bat"
   "brightnessctl"
   "clang"
+  "cliphist"
   "cloudflared"
   "cmake"
   "dysk"

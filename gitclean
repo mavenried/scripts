@@ -1,0 +1,44 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+# Print usage
+if [[ "${1:-}" == "-h" || "${1:-}" == "--help" ]]; then
+  echo "Usage: $(basename "$0") [path/to/repo]"
+  echo "Prunes unreachable objects, expires reflogs, and aggressively repacks .git"
+  exit 0
+fi
+
+# Change to target directory if provided
+TARGET_DIR="${1:-.}"
+cd "$TARGET_DIR"
+
+# Verify target is a git repository
+if ! git rev-parse --is-inside-work-tree >/dev/null 2>&1; then
+  echo "Error: '$(pwd)' is not a git repository." >&2
+  exit 1
+fi
+
+GIT_DIR="$(git rev-parse --git-dir)"
+REPO_ROOT="$(git rev-parse --show-toplevel)"
+
+echo "==> Cleaning Git repository at: $REPO_ROOT"
+
+# Measure size before
+SIZE_BEFORE=$(du -sh "$GIT_DIR" | cut -f1)
+echo "--> Size before: $SIZE_BEFORE"
+
+# Clean any dangling lost-found caches
+rm -rf "$GIT_DIR/lost-found"
+
+# 1. Expire all reflogs
+echo "--> Expiring reflogs..."
+git reflog expire --expire=now --all
+
+# 2. Prune unreachable objects and aggressively repack
+echo "--> Pruning unreachable objects and repacking (this may take a moment)..."
+git gc --prune=now --aggressive
+
+# Measure size after
+SIZE_AFTER=$(du -sh "$GIT_DIR" | cut -f1)
+echo "--> Size after:  $SIZE_AFTER"
+echo "==> Cleanup complete!"
